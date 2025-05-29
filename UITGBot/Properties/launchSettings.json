@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "UITGBot": {
+      "commandName": "Project",
+      "commandLineArgs": "G:/PET/База_знаний/telegram-bot/config.json QPZU-JT45-VZTT-RB53",
+      "workingDirectory": "G:\\CODE\\WSCode\\newTGBot\\bin"
+    }
+  }
+}

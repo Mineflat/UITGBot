@@ -1,0 +1,198 @@
+﻿using Microsoft.AspNetCore.DataProtection;
+using Microsoft.Extensions.Hosting;
+using Polly;
+using Spectre.Console;
+using System;
+using System.IO;
+using System.Text;
+using UITGBot.Core;
+
+namespace UITGBot
+{
+    internal class Program
+    {
+        // Дата начала проекта: 02.02.2025
+        // Реально дохуя писал в дней: 3
+        // Без перерывов писал дней: 2
+        private static ManualResetEvent _resetEvent = new ManualResetEvent(false);
+        /// <summary>
+        /// Вызов этого метода продолжит выполнения контекста в методе Main, что в большинстве случаев остановит все системные процессы
+        /// </summary>
+        public static void OnPanic()
+        {
+            _resetEvent.Set();
+        }
+        /// <summary>
+        /// Этот метод спросит необходимую информацию у пользователя, зашифрует ее и выведет ему на экран, чтобы тот мог внести полученные значения в конфиг.
+        /// Затрагивает параметры: токен бота, строка подключения к БД
+        /// </summary>
+        private static void EncryptSensetiveStrings()
+        {
+            string encryptedConnectionString = string.Empty;
+            Console.WriteLine("Введите данные для шифрования");
+            List<(string name, string option)> authData = new List<(string name, string option)>()
+            {
+                //new ("IP и порт для подключения к СУБД (в формате IP:port)", ""), // 0
+                //new ("Имя пользователя для аутентификации", ""), // 1
+                //new ("Пароль пользователя", ""), // 2
+                new ("Токен телеграмм-бота", ""), // 3
+                new ("Строка шифрования данных (БЕЗ ПРОБЕЛОВ)", "") // 4
+            };
+            for (int i = 0; i < authData.Count; i++)
+            {
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.Write($"{authData[i].name} >> ");
+                Console.ResetColor();
+                string? option = Console.ReadLine();
+                if (string.IsNullOrEmpty(option))
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.Write($"{authData[i].name} не может быть пустым значением");
+                    Console.ResetColor();
+                    Environment.Exit(1);
+                }
+                authData[i] = new(authData[i].name, option);
+            }
+            Console.Clear();
+            Console.ForegroundColor = ConsoleColor.Black;
+            Console.BackgroundColor = ConsoleColor.Red;
+            Console.WriteLine("\t    [!!!]    Обратите анимение!    [!!!]");
+            Console.ResetColor();
+            Console.WriteLine("\t\tСледующую секретную строку вы видите в последний раз:\n");
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine($"\t\t\t{authData[1].option}\n");
+            Console.ResetColor();
+            Console.WriteLine("\t\tВы не сможете запустить приложение, если забудете ее, т.к. ей зашифрована\n" +
+                "\t\tстрока подключения к БД и токен бота. Сохраните и не распространыйте ее.\n\n" +
+                "\tПримечание:\n" +
+                "\t\tЕсли вы используете опцию EncryptDB=true, все записи в БД шифруются при помощи этого же ключа.\n" +
+                "\t\tВ таком случае, при его утере, восстановление базы данных НЕВОЗМОЖНО\n\n" +
+                "-------------------------------------------------------------------------\n");
+            // Шифрование строки подключения
+            //string connectionString = $"Host={authData[0].option};Username={authData[1].option};Password={authData[2].option}";
+            string botToken = authData[0].option;
+            string password = authData[1].option;
+            Cryptor? cryptor = new Cryptor(password);
+            Console.WriteLine("\tИнформация зашифрована. Добавьте следующие значения в конфигурационный файл:");
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            //Console.WriteLine($"\t\tDB_SECRET=\"{cryptor.Encrypt(connectionString)}\"");
+            Console.WriteLine($"\t\tBOT_SECRET=\"{cryptor.Encrypt(botToken)}\"");
+            Console.ResetColor();
+            Console.WriteLine("\tTIP:\n" +
+                "\t\tЕсли вы не хотите вводить пароль при каждом перезапуске сервиса, добавьте переменную окружения:\n");
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"\t\texport TGBOT_SECRET_KEY=\'{password}\'\n");
+            Console.ResetColor();
+            Console.WriteLine("\t\tЕсли вы используете SystemD, добавьте в конфигурацию сервиса следующую строку:\n\n" +
+                "\t\t\t[Service]\n" +
+                "\t\t\t...");
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"\t\t\tEnvironment=\"TGBOT_SECRET_KEY={password}\"");
+            Console.ResetColor();
+            cryptor = null;
+            OnPanic();
+        }
+        static void Main(string[] args)
+        {
+            ////Initialize(new string[] { "G:\\config.json", "QPZU-JT45-VZTT-RB53" });
+            ////Console.ReadKey();
+            ////Environment.Exit(0);
+
+            //var text_panel = new Panel("[wheat1]Выполнив эту команду ты получишь несколько паролей, которые можешь потом использовать.\n" +
+            //    "Все пароли подведены под определенный формат и весьма стойкие (от 1 млн лет на вскрытие каждого пароля)\n" +
+            //    "Это безопасно, потому что сами пароли нигде не сохраняются (тем более, их сразу несколько - кто знает, какой из них и где ты будешь использовать?)[/]");
+            //text_panel.Header = new PanelHeader($"|     [grey100]Результат выполнения команды [/][lightgreen](пустое сообщение)[/]     |");
+            ////text_panel.Padding = new Padding(2, 0);
+            ////text_panel.PadRight(Console.BufferWidth / 2);
+            //text_panel.Width = Console.WindowWidth / 5;
+            //text_panel.UseSafeBorder = true;
+            //text_panel.BorderColor(color: Spectre.Console.Color.LightGreen);
+            ////text_panel.
+            //text_panel.Expand = true;
+
+            //AnsiConsole.Write(text_panel);
+
+            //return;
+
+            string? passwd = Environment.GetEnvironmentVariable("TGBOT_SECRET_KEY");
+            switch (args.Length)
+            {
+                case 1:
+                    if (args[0].ToLower() == "--secure")
+                    {
+                        EncryptSensetiveStrings();
+                    }
+                    else
+                    {
+                        if (string.IsNullOrEmpty(passwd))
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine($"Неверное использование!\nДля защиты данных используйте:\n\t\t./{AppDomain.CurrentDomain.FriendlyName} --secure");
+                            Console.ResetColor();
+                            Environment.Exit(1);
+                        }
+                        else
+                        {
+                            Initialize(args = new string[]{
+                                args[0],
+                                passwd
+                            });
+                        }
+                    }
+                    break;
+                case 2:
+                    Initialize(args);
+                    break;
+                default:
+                    Console.ForegroundColor = ConsoleColor.Cyan;
+                    Console.WriteLine($"Неверное использование!\nДля запуска используйте:\n\t\t./{AppDomain.CurrentDomain.FriendlyName} [/full/path/to/config.json] [decrypt_password]");
+                    Console.ResetColor();
+                    OnPanic();
+                    break;
+            }
+            
+            // Ждем, пока эвент не скинет кто-то другой
+            _resetEvent.WaitOne();
+        }
+        private static void Initialize(string[] args)
+        {
+            Console.Clear();
+            Storage.SystemCriptor = new Cryptor(args[1]);
+            // Кто жалуется на отсутствие try-catch блока - лохудра ;)
+            // Мне нужны 2 РАЗНЫЕ ошибки на 2 РАЗНЫХ сценария
+            if (!File.Exists(args[0]))
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"Can't open configuration file {args[0]}: it's missing");
+                Console.ResetColor();
+                OnPanic();
+            }
+            if (File.ReadAllText(args[0]).Length == 0) // И вот для этого и нужен блок try-catch.
+                                                       // Если мы не сможем открыть этот файл, будет необработанное исключение
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"Can't open configuration file {args[0]}: it's EMPTY");
+                Console.ResetColor();
+                OnPanic();
+            }
+            // Момент инициализации, если файл существует и не пуст
+            // Вызов функции инициализаци
+            (bool success, string errorMessage) setupResult = SystemInitializer.Initialize(args[0]).Result;
+            if (setupResult.success)
+            {
+                // Тут опасненько, потому что если логгер еще не инициализирован - будет херово: этого сообщения тупо не будет
+                // Однако, и ошибки не будет. Если метод вернул нам true, значит что ВСЕ этапы инициализации были успешно закончены
+                // Это - узкое горлышко этого ПО
+                Storage.Logger?.Logger.Information("System setup done successfully");
+                Storage._configurationPath = args[1];
+            }
+            else
+            {
+                OnPanic();
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"\tПроизошла ошибка при запуске бота:\n{setupResult.errorMessage}");
+                Console.ResetColor();
+            }
+        }
+    }
+}
