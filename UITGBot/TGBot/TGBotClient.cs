@@ -8,6 +8,7 @@ using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 using UITGBot.Core;
+using UITGBot.Logging;
 
 namespace UITGBot.TGBot
 {
@@ -72,74 +73,62 @@ namespace UITGBot.TGBot
         /// <param name="token">Токен для управления отменой запроса</param>
         private async Task HandleUpdateAsync(ITelegramBotClient client, Update update, CancellationToken token)
         {
+            // Базовые проверки обновления
             if (update.Type != Telegram.Bot.Types.Enums.UpdateType.Message) return;
+            if (string.IsNullOrEmpty(update.Message?.Text) && string.IsNullOrEmpty(update.Message?.Caption)) return;
             var userID = update.Message?.From?.Id; // Компилятор долбоеб. Забавно, но если сунуть это
                                                    // в IF, он скажет что долбоеб я. Семейка долбоебов крч
+                                                   // Проверка ID пользователя и поиск юзернейма
             if (userID == null) return;
-            if (string.IsNullOrEmpty(update.Message?.Text) && string.IsNullOrEmpty(update.Message?.Caption)) return;
+            if (update.Message == null) return;
             string userName = string.IsNullOrEmpty(update.Message.From?.Username)
                 ? update.Message.From?.Id.ToString() ?? "Unknown"
                 : update.Message.From.Username;
 
+            // Обработка текста сообщения (проверка на пустоту)
             string? msgText = update.Message.Text ?? update.Message.Caption;
-            // Логирование
             if (string.IsNullOrEmpty(msgText)) return;
-            Storage.Logger?.Logger.Information($"[MESSAGE]" +
-                $"[{(string.IsNullOrEmpty(update.Message.Chat.Title) ? $"{update.Message.Chat.Id}" : update.Message.Chat.Title)}]" +
-                $"[{userName}]: " +
-                $"{update.Message.Text ?? update.Message.Caption}");
             msgText = msgText.ToLower().Trim();
+            // Проверка, что это именно команда, а не какая-то дроч
             if (!msgText.StartsWith(Storage.SystemSettings.BOT_INIT_TOKEN.ToLower().Trim())) return;
             msgText = msgText.Replace(Storage.SystemSettings.BOT_INIT_TOKEN.ToLower().Trim(), "");
             msgText = msgText.Trim();
-            // Проверка, что это именно команда, а не какая-то дроч
-            //BotCommand? selectedCommand = Storage.BotCommands.FirstOrDefault(x => x.Name.ToLower().Trim() == msgText);
-            string[] keywords = msgText.Split(' ');
-            // Новая логика по ключевому слову. Берем первую часть /[keyword] и ищем уже по ней
-            BotCommand? selectedCommand = Storage.BotCommands.FirstOrDefault(x => x.Name.ToLower().Trim() == msgText.ToLower()); 
-            
-            if (selectedCommand == null || !selectedCommand.Enabled)
-            {
-                selectedCommand = Storage.BotCommands.FirstOrDefault(x => x.Name.ToLower().Trim() == keywords[0].ToLower());
-                if (selectedCommand == null || !selectedCommand.Enabled) return;
 
+            // Логирование
+            Storage.Logger?.Logger.Information($"[MESSAGE]" +
+                $"[{(string.IsNullOrEmpty(update.Message.Chat.Title) ? $"{update.Message.Chat.Id}" : update.Message.Chat.Title)}]" +
+                $"[{userName}]: " +
+                $"{msgText}");
+
+
+            // Получаем команду и проверяем. Здесь использоавн новый удобный формат логирования
+            // (при чем, двухуровневый: одибки до и после запуска команды будут отливаться)
+            UpdateHandleResult proccessResult = SearchValidCommand(msgText, userID);
+            if (proccessResult.HasErrors)
+            {
+                Storage.Logger?.Logger.Error($"{proccessResult.ErrorMessage}");
+                if (!string.IsNullOrEmpty(proccessResult.ReplyMessage))
+                    await BotCommand.SendMessage($"{proccessResult.ReplyMessage}", false, client, update, token);
+                return;
             }
-            // Проверка, что пользователь с указанным From.ID может выполнять эту команду
-            if (!selectedCommand.IsPublic)
-                if (!selectedCommand.UserIDs.Contains(userID.Value)) return;
-
-            //await InvokeCommand(selectedCommand, client, update, token); // Очково, что это заблокитруется поток.
-            //                                                             // Но он вроде как на каждый прилет создается,
-            //                                                             // так что похуй наверное
-            // Отбой, больше не очково
-            // Очково с таких мувов будет ЦП и ОЗУ сервера, когда бота начнут дудосить
-            // UPD: все еще очково, но теперь оно ебашит с логами :D
-            Storage.Logger?.Logger.Information($"Запущена команда {keywords[0]} пользователем {userName}");
-            //Storage.Logger?.Logger.Information(Newtonsoft.Json.JsonConvert.SerializeObject(selectedCommand, Newtonsoft.Json.Formatting.Indented));
-            try
+            else Storage.Logger?.Logger.Information($"{proccessResult.ErrorMessage}");
+            if (proccessResult.SelectedCommand != null)
             {
-                if (selectedCommand.IgnoreMessageText)
+                try
                 {
-                    await selectedCommand.ExecuteCommand(client, update, token);
+                    Console.WriteLine();
+                    Console.WriteLine(new string('-', Console.WindowWidth - 1));
+                    Storage.Logger?.Logger.Information($"Выполнение команды \"{proccessResult.SelectedCommand.Name}\" пользователем {userName} ...");
+                    await proccessResult.SelectedCommand.ExecuteCommand(client, update, token);
+                    Console.WriteLine(new string('-', Console.WindowWidth - 1));
+                    Console.WriteLine();
                 }
-                else
+                catch (Exception e)
                 {
-                    if (keywords.Length == 1)
-                    {
-                        await selectedCommand.ExecuteCommand(client, update, token);
-                    }
-                    else
-                    {
-                        Storage.Logger?.Logger.Warning($"Команда {selectedCommand.Name} не может быть выполнена, т.к. передано слишком много аргументов");
-                        await BotCommand.SendMessage($"Команда {selectedCommand.Name} не может быть выполнена, т.к. передано слишком много аргументов", false, client, update, token);
-                    }
+                    Storage.Logger?.Logger.Error($"Ошибка при выполнении команды \"{proccessResult.SelectedCommand.Name}\":\n{e.Message}");
                 }
             }
-            catch (Exception e)
-            {
-                Storage.Logger?.Logger.Error($"Ошибка при выполнении команды \"{selectedCommand.Name}\":\n{e.Message}");
-                throw;
-            }
+            else Storage.Logger?.Logger.Error($"Ошибка при обработке списка коамнд: команда не была найдена, но метод SearchValidCommand не вернул HasErrors = true");
         }
         //private async Task<(bool success, string errorMessage, bool selfSending)> InvokeCommand(BotCommand cmd, ITelegramBotClient client, Update update, CancellationToken token)
         //{
@@ -161,5 +150,42 @@ namespace UITGBot.TGBot
         }
         #endregion
 
+        protected static UpdateHandleResult SearchValidCommand(string message, long? userID)
+        {
+            string ErrorMessage = string.Empty;
+            string ReplyMessage = string.Empty;
+            bool hasErrors = false;
+
+            BotCommand? selectedCommand = Storage.BotCommands.FirstOrDefault(x => x.Name.ToLower().Trim() == message.ToLower());
+            if (selectedCommand == null)
+            {
+                selectedCommand = Storage.BotCommands.FirstOrDefault(x => x.Name.ToLower().Trim() == message.Split(' ')[0].ToLower());
+            }
+            if (selectedCommand == null)
+            {
+                hasErrors = true;
+                ErrorMessage = $"Не удалось найти ни одной подходящей команды\n\t\t> {userID}: \"{message}\"";
+            }
+            else
+            {
+                // Это не уязвимость потому что в телеграмм невозможно сделать UserID непубличным. Он всегда придет в запросе. В противном случае есть проверка выше
+                if (!selectedCommand.IsPublic && !selectedCommand.UserIDs.Contains(userID ?? 0))
+                {
+                    hasErrors = true;
+                    ReplyMessage = $"Эта команда не для тебя";
+                    ErrorMessage = $"Найдена подходящая команда, но пользоватлелю не разрешено ее выполнить" +
+                        $"\t\t> {userID}: \"{selectedCommand.Name}\" != \"{message}\"";
+                }
+                if ((!selectedCommand.IgnoreMessageText) && (selectedCommand.Name.Trim().ToLower() != message.Trim().ToLower()))
+                {
+                    hasErrors = true;
+                    ReplyMessage = $"Эта команда не подразумевает аргументов";
+                    ErrorMessage = $"Найдена подходящая команда, но ей передано слишком много аргументов\n" +
+                        $"\t\t> {userID}: \"{selectedCommand.Name}\" != \"{message}\"";
+                }
+                else ErrorMessage = $"Найдена подходящая команда\n\t\t> {userID}: \"{selectedCommand.Name}\"";
+            }
+            return new UpdateHandleResult(ErrorMessage, ReplyMessage, hasErrors, selectedCommand);
+        }
     }
 }
