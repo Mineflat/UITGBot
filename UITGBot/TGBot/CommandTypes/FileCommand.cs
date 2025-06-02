@@ -57,7 +57,6 @@ namespace UITGBot.TGBot.CommandTypes
                         chatId: update.Message.From.Id,
                         document: inputFile,
                         caption: replyText,
-                        //replyParameters: update.Message.MessageId, // Делаем сообщение ответным
                         cancellationToken: token
                     );
                     Storage.Logger?.Logger.Information($"Успешно отправлен файл \"{FilePath}\" в чат {update.Message.Chat.Id} (личные сообщения)");

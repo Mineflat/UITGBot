@@ -69,6 +69,12 @@ namespace UITGBot.TGBot
         /// Указывает, что результат выполнения команды должен был отправлен этому пользователю в личные сообщения
         /// </summary>
         public bool ReplyPrivateMessages { get; set; } = false;
+        /// <summary>
+        /// Разрешает или запрещает боту выполнять команду, 
+        /// если сообщение начинается с команды (ключевого слова), но имеет текст после
+        /// </summary>
+        public bool IgnoreMessageText { get; set; } = false;
+
         public virtual bool Verify()
         {
             string errorMessage = string.Empty;

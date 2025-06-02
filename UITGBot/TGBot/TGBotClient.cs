@@ -93,20 +93,42 @@ namespace UITGBot.TGBot
             msgText = msgText.Replace(Storage.SystemSettings.BOT_INIT_TOKEN.ToLower().Trim(), "");
             msgText = msgText.Trim();
             // Проверка, что это именно команда, а не какая-то дроч
-            BotCommand? selectedCommand = Storage.BotCommands.FirstOrDefault(x => x.Name.ToLower().Trim() == msgText);
-            if (selectedCommand == null || !selectedCommand.Enabled) return;
+            //BotCommand? selectedCommand = Storage.BotCommands.FirstOrDefault(x => x.Name.ToLower().Trim() == msgText);
+
+            // Новая логика по ключевому слову. Берем первую часть /[keyword] и ищем уже по ней
+            string[] keywords = msgText.Split(' ');
+            BotCommand? selectedCommand = Storage.BotCommands.FirstOrDefault(x => x.Name.ToLower().Trim() == keywords[0].ToLower());
+            if (selectedCommand == null || !selectedCommand.Enabled) return;      
             // Проверка, что пользователь с указанным From.ID может выполнять эту команду
             if (!selectedCommand.UserIDs.Contains(userID.Value)) return;
-            Storage.Logger?.Logger.Information($"Запущена команда {msgText} пользователем {userName}");
+
+
+
+
             //await InvokeCommand(selectedCommand, client, update, token); // Очково, что это заблокитруется поток.
             //                                                             // Но он вроде как на каждый прилет создается,
             //                                                             // так что похуй наверное
             // Отбой, больше не очково
             // Очково с таких мувов будет ЦП и ОЗУ сервера, когда бота начнут дудосить
             // UPD: все еще очково, но теперь оно ебашит с логами :D
+            Storage.Logger?.Logger.Information($"Запущена команда {msgText} пользователем {userName}");
             try
             {
-                await selectedCommand.ExecuteCommand(client, update, token);
+                if (selectedCommand.IgnoreMessageText)
+                {
+                    await selectedCommand.ExecuteCommand(client, update, token);
+                }
+                else
+                {
+                    if (keywords.Length > 1)
+                    {
+                        await selectedCommand.ExecuteCommand(client, update, token);
+                        return;
+                    }
+                    Storage.Logger?.Logger.Warning($"Команда {selectedCommand.Name} не может быть выполнена, т.к. передано слишком много аргументов");
+                    await BotCommand.SendMessage($"Команда {selectedCommand.Name} не может быть выполнена, т.к. передано слишком много аргументов", false, client, update, token);
+                    return;
+                }
             }
             catch (Exception e)
             {

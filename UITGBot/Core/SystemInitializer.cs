@@ -17,7 +17,7 @@ namespace UITGBot.Core
     internal static class SystemInitializer
     {
         /// <summary>
-        /// Основная фнкция, вызов которой инициализирует приложение заново
+        /// Основная функция, вызов которой инициализирует приложение заново
         /// </summary>
         /// <param name="configPath">Путь к основному конфигурационному файлу приложения</param>
         /// <returns>Кортеж: true - если инициализация прошла успешно, *string - сообщение об ошибке</returns>
