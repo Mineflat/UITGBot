@@ -36,7 +36,7 @@ namespace UITGBot.TGBot
         /// </summary>
         public bool IsPublic { get; set; } = false;
         /// <summary>
-        /// 
+        /// Указывает, доступна ли команда в данный момент
         /// </summary>
         public bool Enabled { get; set; } = false;
         /// <summary>
@@ -45,7 +45,7 @@ namespace UITGBot.TGBot
         [Required]
         public string CommandType { get; set; } = string.Empty;
         /// <summary>
-        /// Список ID пользователей в телеграмм, которые пренадлежат к этой роли
+        /// Список ID пользователей в телеграмм, которые могут выполнить эту команду
         /// </summary>
         public List<long> UserIDs { get; set; } = new List<long>();
 
@@ -74,7 +74,24 @@ namespace UITGBot.TGBot
         /// если сообщение начинается с команды (ключевого слова), но имеет текст после
         /// </summary>
         public bool IgnoreMessageText { get; set; } = false;
+        /// <summary>
+        /// Список алиасов для этой команды
+        /// Чтобы избежать создания нескольких одинаковых команд, 
+        /// каждая команда может иметь Алиас (альтернативное имя), по которой ее можно вызвать 
+        /// </summary>
+        public List<string> AlternativeNames { get; set; } = new List<string>();   
 
+        public BotCommand? RunAfter = null;
+        /// <summary>
+        /// Список ID пользователей в телеграмм, которые точно НЕ могут выполнить эту команду
+        /// </summary>
+        public List<long> BannedUserIDs { get; set; } = new List<long>();
+
+
+        /// <summary>
+        /// Проверяет команду перед ее добавлением в список доступных действий 
+        /// </summary>
+        /// <returns>Успешность проверки команды</returns>
         public virtual bool Verify()
         {
             string errorMessage = string.Empty;

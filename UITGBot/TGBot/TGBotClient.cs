@@ -174,6 +174,7 @@ namespace UITGBot.TGBot
                     ReplyMessage = $"Эта команда сейчас недоступна";
                     ErrorMessage = $"Найдена подходящая команда, но она отключена" +
                         $"\t\t> {userID}: \"{selectedCommand.Name}\" != \"{message}\"";
+                    return new UpdateHandleResult(ErrorMessage, ReplyMessage, hasErrors, selectedCommand);
                 }
                 // Проверяет, что пользователь имеет права на выполнение этой команды.
                 // ВАЖНО: Это не уязвимость, потому что в телеграмм невозможно сделать UserID непубличным.
@@ -182,8 +183,18 @@ namespace UITGBot.TGBot
                 {
                     hasErrors = true;
                     ReplyMessage = $"Эта команда не для тебя";
-                    ErrorMessage = $"Найдена подходящая команда, но пользоватлелю не разрешено ее выполнить" +
+                    ErrorMessage = $"Найдена подходящая команда, но у пользователя нет прав на ее выполнение" +
                         $"\t\t> {userID}: \"{selectedCommand.Name}\" != \"{message}\"";
+                    return new UpdateHandleResult(ErrorMessage, ReplyMessage, hasErrors, selectedCommand);
+                }
+                // Проверяем, не числится этот ID пользователя в черном списке для этой команды
+                if (selectedCommand.BannedUserIDs.Contains(userID ?? 0))
+                {
+                    hasErrors = true;
+                    ReplyMessage = $"Администратор ограничил для тебя доступ к этой команде";
+                    ErrorMessage = $"Найдена подходящая команда, но пользоватлелю не разрешено ее выполнить (БАН)" +
+                        $"\t\t> {userID}: \"{selectedCommand.Name}\" != \"{message}\"";
+                    return new UpdateHandleResult(ErrorMessage, ReplyMessage, hasErrors, selectedCommand);
                 }
                 // Парсинг аргументов команды (существуют и разрешены ли они) 
                 if ((!selectedCommand.IgnoreMessageText) && (selectedCommand.Name.Trim().ToLower() != message.Trim().ToLower()))
@@ -192,10 +203,11 @@ namespace UITGBot.TGBot
                     ReplyMessage = $"Эта команда не подразумевает аргументов";
                     ErrorMessage = $"Найдена подходящая команда, но ей передано слишком много аргументов\n" +
                         $"\t\t> {userID}: \"{selectedCommand.Name}\" != \"{message}\"";
+                    return new UpdateHandleResult(ErrorMessage, ReplyMessage, hasErrors, selectedCommand);
                 }
-                else ErrorMessage = $"Найдена подходящая команда\n\t\t> {userID}: \"{selectedCommand.Name}\"";
+                ErrorMessage = $"Найдена подходящая команда\n\t\t> {userID}: \"{selectedCommand.Name}\"";
             }
-            return new UpdateHandleResult(ErrorMessage, ReplyMessage, hasErrors, selectedCommand);
+            return new UpdateHandleResult(ErrorMessage, ReplyMessage, hasErrors, selectedCommand); 
         }
         #endregion
     }
