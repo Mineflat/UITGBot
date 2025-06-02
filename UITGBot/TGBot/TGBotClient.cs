@@ -130,12 +130,6 @@ namespace UITGBot.TGBot
             }
             else Storage.Logger?.Logger.Error($"Ошибка при обработке списка коамнд: команда не была найдена, но метод SearchValidCommand не вернул HasErrors = true");
         }
-        //private async Task<(bool success, string errorMessage, bool selfSending)> InvokeCommand(BotCommand cmd, ITelegramBotClient client, Update update, CancellationToken token)
-        //{
-        //    var executionResult = await cmd.ExecuteCommand(client, update, token);
-        //    string replyText = CryptoRandomizer.GetRandomReply(cmd, executionResult.success);
-        //    return (executionResult.success, replyText + Environment.NewLine + executionResult.errorMessage, executionResult.selfSending);
-        //}
         /// <summary>
         /// Функция обработки ошибок Телеграмм-бота
         /// </summary>
@@ -148,8 +142,13 @@ namespace UITGBot.TGBot
             botErrorsLeft -= 1;
             return Task.CompletedTask;
         }
-        #endregion
-
+        /// <summary>
+        /// Выполняет поиск по командам на основе сообщения пользователя и его идентификатора. 
+        /// Определяет, является ли его сообщение командой и возможно ли ее выполнение
+        /// </summary>
+        /// <param name="message">Текст сообщения для поиска по командам</param>
+        /// <param name="userID">ID пользователя, который хочет выполнить команду</param>
+        /// <returns></returns>
         protected static UpdateHandleResult SearchValidCommand(string message, long? userID)
         {
             string ErrorMessage = string.Empty;
@@ -168,7 +167,17 @@ namespace UITGBot.TGBot
             }
             else
             {
-                // Это не уязвимость потому что в телеграмм невозможно сделать UserID непубличным. Он всегда придет в запросе. В противном случае есть проверка выше
+                // Проверка, что команда на самом деле является исполняемой 
+                if (selectedCommand.Enabled)
+                {
+                    hasErrors = true;
+                    ReplyMessage = $"Эта команда сейчас недоступна";
+                    ErrorMessage = $"Найдена подходящая команда, но она отключена" +
+                        $"\t\t> {userID}: \"{selectedCommand.Name}\" != \"{message}\"";
+                }
+                // Проверяет, что пользователь имеет права на выполнение этой команды.
+                // ВАЖНО: Это не уязвимость, потому что в телеграмм невозможно сделать UserID непубличным.
+                // Он всегда придет в запросе. В любом случае, проверка на NULL есть выше, в методе HandleUpdateAsync()
                 if (!selectedCommand.IsPublic && !selectedCommand.UserIDs.Contains(userID ?? 0))
                 {
                     hasErrors = true;
@@ -176,6 +185,7 @@ namespace UITGBot.TGBot
                     ErrorMessage = $"Найдена подходящая команда, но пользоватлелю не разрешено ее выполнить" +
                         $"\t\t> {userID}: \"{selectedCommand.Name}\" != \"{message}\"";
                 }
+                // Парсинг аргументов команды (существуют и разрешены ли они) 
                 if ((!selectedCommand.IgnoreMessageText) && (selectedCommand.Name.Trim().ToLower() != message.Trim().ToLower()))
                 {
                     hasErrors = true;
@@ -187,5 +197,6 @@ namespace UITGBot.TGBot
             }
             return new UpdateHandleResult(ErrorMessage, ReplyMessage, hasErrors, selectedCommand);
         }
+        #endregion
     }
 }
