@@ -94,16 +94,19 @@ namespace UITGBot.TGBot
             msgText = msgText.Trim();
             // Проверка, что это именно команда, а не какая-то дроч
             //BotCommand? selectedCommand = Storage.BotCommands.FirstOrDefault(x => x.Name.ToLower().Trim() == msgText);
-
-            // Новая логика по ключевому слову. Берем первую часть /[keyword] и ищем уже по ней
             string[] keywords = msgText.Split(' ');
-            BotCommand? selectedCommand = Storage.BotCommands.FirstOrDefault(x => x.Name.ToLower().Trim() == keywords[0].ToLower());
-            if (selectedCommand == null || !selectedCommand.Enabled) return;      
+            // Новая логика по ключевому слову. Берем первую часть /[keyword] и ищем уже по ней
+            BotCommand? selectedCommand = Storage.BotCommands.FirstOrDefault(x => x.Name.ToLower().Trim() == msgText.ToLower()); 
+            
+            if (selectedCommand == null || !selectedCommand.Enabled)
+            {
+                selectedCommand = Storage.BotCommands.FirstOrDefault(x => x.Name.ToLower().Trim() == keywords[0].ToLower());
+                if (selectedCommand == null || !selectedCommand.Enabled) return;
+
+            }
             // Проверка, что пользователь с указанным From.ID может выполнять эту команду
-            if (!selectedCommand.UserIDs.Contains(userID.Value)) return;
-
-
-
+            if (!selectedCommand.IsPublic)
+                if (!selectedCommand.UserIDs.Contains(userID.Value)) return;
 
             //await InvokeCommand(selectedCommand, client, update, token); // Очково, что это заблокитруется поток.
             //                                                             // Но он вроде как на каждый прилет создается,
@@ -111,7 +114,8 @@ namespace UITGBot.TGBot
             // Отбой, больше не очково
             // Очково с таких мувов будет ЦП и ОЗУ сервера, когда бота начнут дудосить
             // UPD: все еще очково, но теперь оно ебашит с логами :D
-            Storage.Logger?.Logger.Information($"Запущена команда {msgText} пользователем {userName}");
+            Storage.Logger?.Logger.Information($"Запущена команда {keywords[0]} пользователем {userName}");
+            //Storage.Logger?.Logger.Information(Newtonsoft.Json.JsonConvert.SerializeObject(selectedCommand, Newtonsoft.Json.Formatting.Indented));
             try
             {
                 if (selectedCommand.IgnoreMessageText)
@@ -120,62 +124,22 @@ namespace UITGBot.TGBot
                 }
                 else
                 {
-                    if (keywords.Length > 1)
+                    if (keywords.Length == 1)
                     {
                         await selectedCommand.ExecuteCommand(client, update, token);
-                        return;
                     }
-                    Storage.Logger?.Logger.Warning($"Команда {selectedCommand.Name} не может быть выполнена, т.к. передано слишком много аргументов");
-                    await BotCommand.SendMessage($"Команда {selectedCommand.Name} не может быть выполнена, т.к. передано слишком много аргументов", false, client, update, token);
-                    return;
+                    else
+                    {
+                        Storage.Logger?.Logger.Warning($"Команда {selectedCommand.Name} не может быть выполнена, т.к. передано слишком много аргументов");
+                        await BotCommand.SendMessage($"Команда {selectedCommand.Name} не может быть выполнена, т.к. передано слишком много аргументов", false, client, update, token);
+                    }
                 }
             }
             catch (Exception e)
             {
                 Storage.Logger?.Logger.Error($"Ошибка при выполнении команды \"{selectedCommand.Name}\":\n{e.Message}");
-                //selectedCommand.Enabled = false;
-                //Storage.Logger?.Logger.Warning($"Команда {selectedCommand.Name} отключена");
                 throw;
             }
-            //await selectedCommand.ExecuteCommand(client, update, token);
-            //(bool success, string errorMessage, bool selfSending) executionRelult = await InvokeCommand(selectedCommand, client, update, token);
-            //if (executionRelult.success)
-            //{
-            //    Storage.Logger?.Logger.Information($"Команда {selectedCommand.Name} " +
-            //        $"успешно выполнена пользователем {userName}");
-            //}
-            //else
-            //{
-            //    Storage.Logger?.Logger.Error($"Ошибка при выполнении команды \"{selectedCommand.Name}\" " +
-            //            $"пользователем {userName}:\n" +
-            //            $"{executionRelult.errorMessage}");
-            //    selectedCommand.Enabled = false;
-            //}
-            //if (executionRelult.selfSending) return;
-            //try
-            //{
-            //    if (selectedCommand.ReplyPrivateMessages)
-            //    {
-            //        if (update.Message.From == null) return;
-            //        await client.SendMessage(update.Message.From.Id,
-            //            executionRelult.errorMessage,
-            //            replyParameters: update.Message.MessageId,
-            //            cancellationToken: token,
-            //            parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown);
-            //    }
-            //    else
-            //    {
-            //        await client.SendMessage(update.Message.Chat.Id,
-            //            executionRelult.errorMessage,
-            //            replyParameters: update.Message.MessageId,
-            //            cancellationToken: token,
-            //            parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown);
-            //    }
-            //}
-            //catch (Exception e)
-            //{
-            //    Storage.Logger?.Logger.Error($"Произошла ошибка при работе бота:\n{e.Message}");
-            //}
         }
         //private async Task<(bool success, string errorMessage, bool selfSending)> InvokeCommand(BotCommand cmd, ITelegramBotClient client, Update update, CancellationToken token)
         //{

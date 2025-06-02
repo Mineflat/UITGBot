@@ -2,7 +2,7 @@
   "profiles": {
     "UITGBot": {
       "commandName": "Project",
-      "commandLineArgs": "G:/PET/База_знаний/telegram-bot/config.json QPZU-JT45-VZTT-RB53",
+      "commandLineArgs": "G:/PET/База_знаний/telegram-bot/config.json 6421001946:AAGz9JplONoh4C375UeB3Yqd4htO3T73QVE",
       "workingDirectory": "G:\\CODE\\WSCode\\newTGBot\\bin"
     }
   }
