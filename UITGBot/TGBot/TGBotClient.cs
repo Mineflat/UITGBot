@@ -156,19 +156,25 @@ namespace UITGBot.TGBot
             bool hasErrors = false;
 
             BotCommand? selectedCommand = Storage.BotCommands.FirstOrDefault(x => x.Name.ToLower().Trim() == message.ToLower());
-            if (selectedCommand == null)
-            {
-                selectedCommand = Storage.BotCommands.FirstOrDefault(x => x.Name.ToLower().Trim() == message.Split(' ')[0].ToLower());
-            }
+            // Если не получается найти команду по ее полному имени, то ищем только по первой части (остальное считаем аргументами)
+            if (selectedCommand == null) selectedCommand = Storage.BotCommands.FirstOrDefault(x => x.Name.ToLower().Trim() == message.Split(' ')[0].ToLower());
+            // Обработка найденных команд
             if (selectedCommand == null)
             {
                 hasErrors = true;
-                ErrorMessage = $"Не удалось найти ни одной подходящей команды\n\t\t> {userID}: \"{message}\"";
+                ErrorMessage = $"Не удалось найти ни одной подходящей команды по ее основному имени\n\t\t> {userID}: \"{message}\"";
+                // Тут будет логика поиска команды по ее альтернативным именам (если есть)
+
             }
             else
             {
+                /// Приоритет определения ошибок для команды:
+                /// 1. -> Недоступность команды 
+                /// 2. -> Нет прав на исполнение команды (неактивна) 
+                /// 3. -> БАН пользователя на исполнение команды 
+                /// 4. -> Неверное кол-во аргументов к команде 
                 // Проверка, что команда на самом деле является исполняемой 
-                if (selectedCommand.Enabled)
+                if (!selectedCommand.Enabled)
                 {
                     hasErrors = true;
                     ReplyMessage = $"Эта команда сейчас недоступна";
@@ -192,7 +198,7 @@ namespace UITGBot.TGBot
                 {
                     hasErrors = true;
                     ReplyMessage = $"Администратор ограничил для тебя доступ к этой команде";
-                    ErrorMessage = $"Найдена подходящая команда, но пользоватлелю не разрешено ее выполнить (БАН)" +
+                    ErrorMessage = $"Найдена подходящая команда, но пользоватлелю не разрешено ее выполнить (персональный БАН)" +
                         $"\t\t> {userID}: \"{selectedCommand.Name}\" != \"{message}\"";
                     return new UpdateHandleResult(ErrorMessage, ReplyMessage, hasErrors, selectedCommand);
                 }
@@ -207,8 +213,9 @@ namespace UITGBot.TGBot
                 }
                 ErrorMessage = $"Найдена подходящая команда\n\t\t> {userID}: \"{selectedCommand.Name}\"";
             }
-            return new UpdateHandleResult(ErrorMessage, ReplyMessage, hasErrors, selectedCommand); 
+            return new UpdateHandleResult(ErrorMessage, ReplyMessage, hasErrors, selectedCommand);
         }
         #endregion
+
     }
 }

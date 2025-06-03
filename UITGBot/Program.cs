@@ -94,26 +94,7 @@ namespace UITGBot
         }
         static void Main(string[] args)
         {
-            ////Initialize(new string[] { "G:\\config.json", "QPZU-JT45-VZTT-RB53" });
-            ////Console.ReadKey();
-            ////Environment.Exit(0);
-
-            //var text_panel = new Panel("[wheat1]Выполнив эту команду ты получишь несколько паролей, которые можешь потом использовать.\n" +
-            //    "Все пароли подведены под определенный формат и весьма стойкие (от 1 млн лет на вскрытие каждого пароля)\n" +
-            //    "Это безопасно, потому что сами пароли нигде не сохраняются (тем более, их сразу несколько - кто знает, какой из них и где ты будешь использовать?)[/]");
-            //text_panel.Header = new PanelHeader($"|     [grey100]Результат выполнения команды [/][lightgreen](пустое сообщение)[/]     |");
-            ////text_panel.Padding = new Padding(2, 0);
-            ////text_panel.PadRight(Console.BufferWidth / 2);
-            //text_panel.Width = Console.WindowWidth / 5;
-            //text_panel.UseSafeBorder = true;
-            //text_panel.BorderColor(color: Spectre.Console.Color.LightGreen);
-            ////text_panel.
-            //text_panel.Expand = true;
-
-            //AnsiConsole.Write(text_panel);
-
-            //return;
-
+            //Initialize(new string[] { "G:\\config.json", "QPZU-JT45-VZTT-RB53" });
             string? passwd = Environment.GetEnvironmentVariable("TGBOT_SECRET_KEY");
             switch (args.Length)
             {
@@ -130,7 +111,7 @@ namespace UITGBot
                             Console.WriteLine($"Неверное использование!\nДля защиты данных используйте:\n\t\t./{AppDomain.CurrentDomain.FriendlyName} --secure");
                             Console.ResetColor();
                             Environment.Exit(1);
-                        }
+                        } 
                         else
                         {
                             Initialize(args = new string[]{

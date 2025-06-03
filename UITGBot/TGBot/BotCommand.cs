@@ -80,8 +80,10 @@ namespace UITGBot.TGBot
         /// каждая команда может иметь Алиас (альтернативное имя), по которой ее можно вызвать 
         /// </summary>
         public List<string> AlternativeNames { get; set; } = new List<string>();   
-
-        public BotCommand? RunAfter = null;
+        /// <summary>
+        /// Действие, которое будет вызвано после запуска первой команды
+        /// </summary>
+        public BotCommand? RunAfter { get; set; } = null;
         /// <summary>
         /// Список ID пользователей в телеграмм, которые точно НЕ могут выполнить эту команду
         /// </summary>
