@@ -121,7 +121,7 @@ namespace UITGBot.TGBot.CommandTypes
                 // Используем Directory.EnumerateFiles, чтобы получить список файлов
                 foreach (var file in Directory.EnumerateFiles(path, ext, SearchOption.AllDirectories))
                 {
-                    Console.WriteLine($"Найден файл: {file}");
+                    //Console.WriteLine($"Найден файл: {file}");
                     files.Add(file); // Добавляем файл в список
                 }
             }
