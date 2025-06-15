@@ -204,6 +204,7 @@ namespace UITGBot.Core
                     }
                     Storage.BotCommands.Add(command);
                     Storage.Logger?.Logger.Information($"Успешно добавлена команда \"{command.Name}\"");
+
                 }
                 if (Storage.BotCommands.Count > 0)
                 {

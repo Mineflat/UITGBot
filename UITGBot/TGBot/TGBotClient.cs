@@ -21,10 +21,13 @@ namespace UITGBot.TGBot
         public static System.Timers.Timer? _errorTimer { get; protected set; }
         public TGBotClient()
         {
-            _errorTimer = new System.Timers.Timer(30000);
-            _errorTimer.Elapsed += (s, e) => Task.Run(CheckDropdown);
-            _errorTimer.AutoReset = true;
-            _errorTimer.Start();
+            if (!Storage.SystemSettings.IgnoreErrors)
+            {
+                _errorTimer = new System.Timers.Timer(30000);
+                _errorTimer.Elapsed += (s, e) => Task.Run(CheckDropdown);
+                _errorTimer.AutoReset = true;
+                _errorTimer.Start();
+            }
             InitializeBot();
         }
         #region Системное

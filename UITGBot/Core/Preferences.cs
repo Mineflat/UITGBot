@@ -40,6 +40,11 @@ namespace UITGBot.Core
         /// Разрешить использование бота пользователями без назначенных ролей. В таком случае у действия должна быть прописана роль "Public"
         /// </summary>
         public bool AllowUnsafeUsers { get; set; } = false;
+        /// <summary>
+        /// Позволяет игнорировать ошибки бота перед его остановкой 
+        /// Полезно при разрывах соединения с серверами телеграмм
+        /// </summary>
+        public bool IgnoreErrors { get; set; } = false;
         #endregion
 
         #region Логирование

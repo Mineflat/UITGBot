@@ -89,7 +89,6 @@ namespace UITGBot.TGBot
         /// </summary>
         public List<long> BannedUserIDs { get; set; } = new List<long>();
 
-
         /// <summary>
         /// Проверяет команду перед ее добавлением в список доступных действий 
         /// </summary>
