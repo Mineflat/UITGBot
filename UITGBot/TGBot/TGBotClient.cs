@@ -55,8 +55,8 @@ namespace UITGBot.TGBot
             receiverOptions = new ReceiverOptions
             {
                 AllowedUpdates = { }, // Принимаем все возможные апдейты от телеграм
-                DropPendingUpdates = false // Не разрешаем боту забивать бот после перезапуска,
-                                           // если сообщение получено до того, как он включился
+                DropPendingUpdates = false // Не разрешаем боту забивать на сообщение после перезапуска,
+                                           // если оно получено до того, как он включился
             };
             cancellationToken = new CancellationTokenSource();
             botClient = new TelegramBotClient(Storage.PlaintextTelegramBotToken);
