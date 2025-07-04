@@ -11,6 +11,7 @@ using Telegram.Bot;
 using Telegram.Bot.Types;
 using UITGBot.Core;
 using Telegram.Bots.Types;
+using UITGBot.Logging;
 
 namespace UITGBot.TGBot
 {
@@ -107,8 +108,7 @@ namespace UITGBot.TGBot
             }
             if (string.IsNullOrEmpty(CommandType)) errorMessage += "CommandType: Неверный тип команды" + Environment.NewLine;
             if (string.IsNullOrEmpty(errorMessage)) return true;// && Enabled;
-            Storage.Logger?.Logger.Warning($"Команда {(string.IsNullOrEmpty(Name) ? "(пустое имя команды)" : $"{Name}")} не прошла первичную верицикацию: {errorMessage}");
-            Console.WriteLine($"Команда {(string.IsNullOrEmpty(Name) ? "(пустое имя команды)" : $"{Name}")} не прошла первичную верицикацию: {errorMessage}");
+            UILogger.AddLog($"Команда {(string.IsNullOrEmpty(Name) ? "(пустое имя команды)" : $"{Name}")} не прошла первичную верицикацию: {errorMessage}", "WARNING");
             Enabled = false;
             return Enabled;
         }
@@ -133,19 +133,19 @@ namespace UITGBot.TGBot
             AnsiConsole.Write(text_panel);
             if (message.Length > 4096)
             {
-                Storage.Logger?.Logger.Error($"Произошла ошибка при отправке слишком большого текста ({message.Length})!");
+                UILogger.AddLog($"Произошла ошибка при отправке слишком большого текста ({message.Length})!", "ERROR");
                 return false;
             }
             try
             {
-                if (update.Message == null || update.Message.From == null) { Storage.Logger?.Logger.Error($"Сообщение не может быть отправлено, т.к. параметр update.Message.From пуст"); ; return false; }
+                if (update.Message == null || update.Message.From == null) { UILogger.AddLog($"Сообщение не может быть отправлено, т.к. параметр update.Message.From пуст", "ERROR"); return false; }
                 if (replyPrivateMessages)
                 {
                     await client.SendMessage(update.Message.From.Id,
                         message,
                         cancellationToken: token,
                         parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown);
-                    Storage.Logger?.Logger.Information($"Сообщение отправлено ПОЛЬЗОВАТЕЛЮ {update.Message.From.Username} ({update.Message.From.Id})");
+                    UILogger.AddLog($"Сообщение отправлено ПОЛЬЗОВАТЕЛЮ {update.Message.From.Username} ({update.Message.From.Id})");
                 }
                 else
                 {
@@ -154,12 +154,12 @@ namespace UITGBot.TGBot
                         replyParameters: update.Message.MessageId,
                         cancellationToken: token,
                         parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown);
-                    Storage.Logger?.Logger.Information($"Сообщение отправлено В ПУБЛИЧНЫЙ ЧАТ {update.Message.Chat.Username} ({update.Message.Chat.Id})");
+                    UILogger.AddLog($"Сообщение отправлено В ПУБЛИЧНЫЙ ЧАТ {update.Message.Chat.Username} ({update.Message.Chat.Id})");
                 }
             }
             catch (Exception e)
             {
-                Storage.Logger?.Logger.Error($"Произошла ошибка при выполнении команды:\n{e.Message}");
+                UILogger.AddLog($"Произошла ошибка при выполнении команды:\n{e.Message}", "ERROR");
                 return false;
             }
             return true;

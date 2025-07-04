@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using UITGBot.Core;
+using UITGBot.Logging;
 
 namespace UITGBot.TGBot.CommandTypes
 {
@@ -22,7 +23,7 @@ namespace UITGBot.TGBot.CommandTypes
         public override bool Verify()
         {
             if (!base.Verify()) return false;
-            if (string.IsNullOrEmpty(Message)) Storage.Logger?.Logger.Error($"Не удалось верифицировать команду {Name} - пустой параметр Message");
+            if (string.IsNullOrEmpty(Message)) { UILogger.AddLog($"Не удалось верифицировать команду {Name} - пустой параметр Message", "ERROR"); return false; }
             return true;
         }
         /// <summary>
@@ -41,7 +42,7 @@ namespace UITGBot.TGBot.CommandTypes
                 {
                     if (RunAfter.Enabled)
                     {
-                        Storage.Logger?.Logger.Information($"Выполнение КАСКАДНОЙ команды: {Name} => {RunAfter.Name}");
+                        UILogger.AddLog($"Выполнение КАСКАДНОЙ команды: {Name} => {RunAfter.Name}");
                         await RunAfter.ExecuteCommand(client, update, token);
                     }
                 }

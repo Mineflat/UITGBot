@@ -6,6 +6,7 @@ using System;
 using System.IO;
 using System.Text;
 using UITGBot.Core;
+using UITGBot.Logging;
 
 namespace UITGBot
 {
@@ -107,9 +108,7 @@ namespace UITGBot
                     {
                         if (string.IsNullOrEmpty(passwd))
                         {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine($"Неверное использование!\nДля защиты данных используйте:\n\t\t./{AppDomain.CurrentDomain.FriendlyName} --secure");
-                            Console.ResetColor();
+                            UILogger.AddLog($"Неверное использование!\nДля защиты данных используйте:\n\t\t./{AppDomain.CurrentDomain.FriendlyName} --secure", "FATAL");
                             Environment.Exit(1);
                         } 
                         else
@@ -125,10 +124,7 @@ namespace UITGBot
                     Initialize(args);
                     break;
                 default:
-                    Console.ForegroundColor = ConsoleColor.Cyan;
-                    Console.WriteLine($"Неверное использование!\nДля запуска используйте:\n\t\t./{AppDomain.CurrentDomain.FriendlyName} [/full/path/to/config.json] [decrypt_password]");
-                    Console.ResetColor();
-                    OnPanic();
+                    UILogger.AddLog($"Неверное использование!\nДля запуска используйте:\n\t\t./{AppDomain.CurrentDomain.FriendlyName} [/full/path/to/config.json] [decrypt_password]", "FATAL");
                     break;
             }
             
@@ -143,18 +139,12 @@ namespace UITGBot
             // Мне нужны 2 РАЗНЫЕ ошибки на 2 РАЗНЫХ сценария
             if (!File.Exists(args[0]))
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"Can't open configuration file {args[0]}: it's missing");
-                Console.ResetColor();
-                OnPanic();
+                UILogger.AddLog($"Невозможно применить файл конфигурации {args[0]}: файл по указанному пути отсутствует", "FATAL");
             }
             if (File.ReadAllText(args[0]).Length == 0) // И вот для этого и нужен блок try-catch.
                                                        // Если мы не сможем открыть этот файл, будет необработанное исключение
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"Can't open configuration file {args[0]}: it's EMPTY");
-                Console.ResetColor();
-                OnPanic();
+                UILogger.AddLog($"Невозможно применить файл конфигурации {args[0]}: пустой файл", "FATAL");
             }
             // Момент инициализации, если файл существует и не пуст
             // Вызов функции инициализаци
@@ -164,15 +154,12 @@ namespace UITGBot
                 // Тут опасненько, потому что если логгер еще не инициализирован - будет херово: этого сообщения тупо не будет
                 // Однако, и ошибки не будет. Если метод вернул нам true, значит что ВСЕ этапы инициализации были успешно закончены
                 // Это - узкое горлышко этого ПО
-                Storage.Logger?.Logger.Information("System setup done successfully");
-                Storage._configurationPath = args[1];
+                UILogger.AddLog("System setup done successfully");
+                Storage._configurationPath = args[1]; 
             }
             else
             {
-                OnPanic();
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"\tПроизошла ошибка при запуске бота:\n{setupResult.errorMessage}");
-                Console.ResetColor();
+                UILogger.AddLog($"Произошла ошибка при запуске бота:\n{setupResult.errorMessage}", "FATAL");
             }
         }
     }

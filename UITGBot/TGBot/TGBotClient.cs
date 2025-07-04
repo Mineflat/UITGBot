@@ -38,7 +38,7 @@ namespace UITGBot.TGBot
         private void CheckDropdown()
         {
             if (botErrorsLeft > 0) { botErrorsLeft = 5; return; }
-            Storage.Logger?.Logger.Fatal("Can't keep up! Too many errors occured in last 15 seconds");
+            UILogger.AddLog("Can't keep up! Too many errors occured in last 15 seconds", "FATAL");
             cancellationToken?.Cancel();
             Program.OnPanic();
         }
@@ -50,7 +50,7 @@ namespace UITGBot.TGBot
         protected void InitializeBot()
         {
             botErrorsLeft = 5;
-            Storage.Logger?.Logger.Information("Starting Telegramm bot...");
+            UILogger.AddLog("Starting Telegramm bot...");
             cancellationToken?.Cancel();
             receiverOptions = new ReceiverOptions
             {
@@ -66,7 +66,9 @@ namespace UITGBot.TGBot
                 receiverOptions,
                 cancellationToken.Token
             );
-            Storage.Logger?.Logger.Information($"Started bot: {botClient.GetMe(cancellationToken.Token).Result.Username}");
+            UILogger.AddLog($"Started bot: {botClient.GetMe(cancellationToken.Token).Result.Username}");
+            Logging.UILogger.InitUILogger();
+            Core.UIRenderer.StartUI();
         }
         /// <summary>
         /// Функция обработки сообщений Телеграмм-ботом
@@ -98,7 +100,7 @@ namespace UITGBot.TGBot
             msgText = msgText.Trim();
 
             // Логирование
-            Storage.Logger?.Logger.Information($"[MESSAGE]" +
+            UILogger.AddLog($"[MESSAGE]" +
                 $"[{(string.IsNullOrEmpty(update.Message.Chat.Title) ? $"{update.Message.Chat.Id}" : update.Message.Chat.Title)}]" +
                 $"[{userName}]: " +
                 $"{msgText}");
@@ -109,19 +111,19 @@ namespace UITGBot.TGBot
             UpdateHandleResult proccessResult = SearchValidCommand(msgText, userID);
             if (proccessResult.HasErrors)
             {
-                Storage.Logger?.Logger.Error($"{proccessResult.ErrorMessage}");
+                UILogger.AddLog($"{proccessResult.ErrorMessage}", "ERROR");
                 if (!string.IsNullOrEmpty(proccessResult.ReplyMessage))
                     await BotCommand.SendMessage($"{proccessResult.ReplyMessage}", false, client, update, token);
                 return;
             }
-            else Storage.Logger?.Logger.Information($"{proccessResult.ErrorMessage}");
+            else UILogger.AddLog($"{proccessResult.ErrorMessage}");
             if (proccessResult.SelectedCommand != null)
             {
                 try
                 {
                     Console.WriteLine();
                     Console.WriteLine(new string('-', Console.WindowWidth - 1));
-                    Storage.Logger?.Logger.Information($"Выполнение команды \"{proccessResult.SelectedCommand.Name}\" пользователем {userName} ...");
+                    UILogger.AddLog($"Выполнение команды \"{proccessResult.SelectedCommand.Name}\" пользователем {userName} ...");
                     await proccessResult.SelectedCommand.ExecuteCommand(client, update, token);
                     Console.WriteLine(new string('-', Console.WindowWidth - 1));
                     Console.WriteLine();
@@ -131,17 +133,17 @@ namespace UITGBot.TGBot
                     //{
                     //    if (proccessResult.SelectedCommand.RunAfter.Enabled)
                     //    {
-                    //        Storage.Logger?.Logger.Information($"Выполнение КАСКАДНОЙ команды: {proccessResult.SelectedCommand.Name} => {proccessResult.SelectedCommand.RunAfter.Name}");
+                    //        UILogger.AddLog($"Выполнение КАСКАДНОЙ команды: {proccessResult.SelectedCommand.Name} => {proccessResult.SelectedCommand.RunAfter.Name}");
                     //        await proccessResult.SelectedCommand.RunAfter.ExecuteCommand(client, update, token);
                     //    }
                     //}
                 }
                 catch (Exception e)
                 {
-                    Storage.Logger?.Logger.Error($"Ошибка при выполнении команды \"{proccessResult.SelectedCommand.Name}\":\n{e.Message}");
+                    UILogger.AddLog($"Ошибка при выполнении команды \"{proccessResult.SelectedCommand.Name}\":\n{e.Message}", "ERROR");
                 }
             }
-            else Storage.Logger?.Logger.Error($"Ошибка при обработке списка коамнд: команда не была найдена, но метод SearchValidCommand не вернул HasErrors = true");
+            else UILogger.AddLog($"Ошибка при обработке списка коамнд: команда не была найдена, но метод SearchValidCommand не вернул HasErrors = true", "ERROR");
         }
         /// <summary>
         /// Функция обработки ошибок Телеграмм-бота
@@ -151,7 +153,7 @@ namespace UITGBot.TGBot
         /// <param name="cancellationToken">Токен для управления отменой запроса</param>
         protected static Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
         {
-            Storage.Logger?.Logger.Error(exception.Message);
+            UILogger.AddLog(exception.Message, "ERROR");
             botErrorsLeft -= 1;
             return Task.CompletedTask;
         }

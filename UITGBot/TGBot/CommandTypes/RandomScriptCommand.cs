@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using UITGBot.Core;
+using UITGBot.Logging;
 
 namespace UITGBot.TGBot.CommandTypes
 {
@@ -25,7 +26,7 @@ namespace UITGBot.TGBot.CommandTypes
             if (!base.Verify()) return false;
             if (!Directory.Exists(ScriptDirectory))
             {
-                Storage.Logger?.Logger.Error($"Команда {Name} не может быть применена, т.к. директория \"{ScriptDirectory}\" не существует. Команда отключена");
+                UILogger.AddLog($"Команда {Name} не может быть применена, т.к. директория \"{ScriptDirectory}\" не существует. Команда отключена", "ERROR");
                 return false;
             }
             return true;
@@ -38,11 +39,11 @@ namespace UITGBot.TGBot.CommandTypes
         {
             if (update.Message == null)
             {
-                Storage.Logger?.Logger.Error($"Команда {Name}: Получено неверное обновление: update.Message пуст (я хз как ты получил это сообщение, телеге видимо плохо)");
+                UILogger.AddLog($"Команда {Name}: Получено неверное обновление: update.Message пуст (я хз как ты получил это сообщение, телеге видимо плохо)", "ERROR");
                 return;
             }
             List<string> scripts = GetExecutableFiles(ScriptDirectory);
-            if (!scripts.Any()) { Storage.Logger?.Logger.Error($"Команда {Name} не смогла найти ни 1 исполняемого файла в директории \"{ScriptDirectory}\""); return; }
+            if (!scripts.Any()) { UILogger.AddLog($"Команда {Name} не смогла найти ни 1 исполняемого файла в директории \"{ScriptDirectory}\"", "ERROR"); return; }
             string selectedPath = scripts[CryptoRandomizer.GetRandom(0, scripts.Count - 1)];
             ScriptCommand c = new()
             {
@@ -66,11 +67,11 @@ namespace UITGBot.TGBot.CommandTypes
             if (c.Verify())
             {
                 await c.ExecuteCommand(client, update, token);
-                Storage.Logger?.Logger.Information($"Команда \"{Name}\" успешно завершена");
+                UILogger.AddLog($"Команда \"{Name}\" успешно завершена");
             }
             else
             {
-                Storage.Logger?.Logger.Error($"Не удалось выполнить команду \"{Name}\": ошибка верификации");
+                UILogger.AddLog($"Не удалось выполнить команду \"{Name}\": ошибка верификации", "ERROR");
             }
         }
         static List<string> GetExecutableFiles(string directory)

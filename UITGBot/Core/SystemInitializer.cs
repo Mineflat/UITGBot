@@ -46,10 +46,10 @@ namespace UITGBot.Core
                 (bool success, string errorMessage) execResult = func();
                 if (!execResult.success)
                 {
-                    Storage.Logger?.Logger.Fatal(execResult.errorMessage);
+                    UILogger.AddLog(execResult.errorMessage, "FATAL");
                     return Task.FromResult(execResult);
                 }
-                else Storage.Logger?.Logger.Information(execResult.errorMessage);
+                else UILogger.AddLog(execResult.errorMessage);
             }
 
             // Запуск административного интерфейса
@@ -199,11 +199,11 @@ namespace UITGBot.Core
                     // Проверка, что команда является уникальной
                     if (Storage.BotCommands.FirstOrDefault(x => x.Name.Trim().ToLower() == command.Name.Trim().ToLower()) != null)
                     {
-                        Storage.Logger?.Logger.Warning($"Найдена неуникальная команда \"{command.Name}\" - пропускается");
+                        UILogger.AddLog($"Найдена неуникальная команда \"{command.Name}\" - пропускается", "WARNING");
                         continue;
                     }
                     Storage.BotCommands.Add(command);
-                    Storage.Logger?.Logger.Information($"Успешно добавлена команда \"{command.Name}\"");
+                    UILogger.AddLog($"Успешно добавлена команда \"{command.Name}\"");
 
                 }
                 if (Storage.BotCommands.Count > 0)

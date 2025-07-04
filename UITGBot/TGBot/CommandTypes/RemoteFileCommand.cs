@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using UITGBot.Core;
+using UITGBot.Logging;
 
 namespace UITGBot.TGBot.CommandTypes
 {
@@ -25,7 +26,7 @@ namespace UITGBot.TGBot.CommandTypes
             if (!base.Verify()) return false;
             if (!Directory.Exists(DirPath))
             {
-                Storage.Logger?.Logger.Error($"Команда {Name} не может быть применена, т.к. директория \"{DirPath}\" не существует. Команда отключена");
+                UILogger.AddLog($"Команда {Name} не может быть применена, т.к. директория \"{DirPath}\" не существует. Команда отключена", "ERROR");
                 return false;
             }
             //Task.Run(async () =>
@@ -42,7 +43,7 @@ namespace UITGBot.TGBot.CommandTypes
         {
             if (update.Type != Telegram.Bot.Types.Enums.UpdateType.Message || update.Message == null)
             {
-                Storage.Logger?.Logger.Warning($"Команде \"{Name}\" не было передано никакого файла, поэтому она читается выполненной по-умолчанию");
+                UILogger.AddLog($"Команде \"{Name}\" не было передано никакого файла, поэтому она читается выполненной по-умолчанию", "WARNING");
                 return;
             }
             // return (true, $"Команде \"{Name}\" не было передано никакого файла, поэтому она читается выполненной по-умолчанию", false);
@@ -67,7 +68,7 @@ namespace UITGBot.TGBot.CommandTypes
                         //fileName = $"{update.Message.Chat.Id}.jpg";
                         fileName = $"{update.Message.From?.Id}_{update.Message.Chat.Id}" +
                             $"_{DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss")}_{Guid.NewGuid()}.jpg"; // Генерируем имя
-                        Storage.Logger?.Logger.Information($"Получен файл {fileName}");
+                        UILogger.AddLog($"Получен файл {fileName}");
                         string buffer = $"{DirPath}/{update.Message.Chat.Id}";
                         if (!Directory.Exists(buffer)) Directory.CreateDirectory(buffer);
                         string buffer2 = Path.Combine(buffer, fileName);
@@ -75,11 +76,11 @@ namespace UITGBot.TGBot.CommandTypes
                         if (!downloadResult0.success)
                         {
                             downloadSuccess = false;
-                            Storage.Logger?.Logger.Warning($"{downloadResult0.errorMessage}");
+                            UILogger.AddLog($"{downloadResult0.errorMessage}", "WARNING");
                         }
                         else
                         {
-                            Storage.Logger?.Logger.Warning($"Успешно сохранен файл \"{fileName}\"");
+                            UILogger.AddLog($"Успешно сохранен файл \"{fileName}\"", "WARNING");
                         }
                         //return (downloadResult0.success, downloadResult0.errorMessage, false);
                     }
@@ -90,7 +91,7 @@ namespace UITGBot.TGBot.CommandTypes
                     {
                         if (RunAfter.Enabled)
                         {
-                            Storage.Logger?.Logger.Information($"Выполнение КАСКАДНОЙ команды: {Name} => {RunAfter.Name}");
+                            UILogger.AddLog($"Выполнение КАСКАДНОЙ команды: {Name} => {RunAfter.Name}");
                             await RunAfter.ExecuteCommand(client, update, token);
                         }
                     }
@@ -122,7 +123,7 @@ namespace UITGBot.TGBot.CommandTypes
                     if (!Directory.Exists(savePath)) Directory.CreateDirectory(savePath);
                     string filePath = Path.Combine(savePath, fileName);
                     var downloadResult = await DownloadFileAsync(client, fileId, filePath);
-                    Storage.Logger?.Logger.Warning(downloadResult.errorMessage);
+                    UILogger.AddLog(downloadResult.errorMessage, "WARNING");
                     string replyText = CryptoRandomizer.GetRandomReply(this, downloadResult.success);
                     await BotCommand.SendMessage(replyText, this.ReplyPrivateMessages, client, update, token);
                     // Выполнение каскадной команды
@@ -130,7 +131,7 @@ namespace UITGBot.TGBot.CommandTypes
                     {
                         if (RunAfter.Enabled)
                         {
-                            Storage.Logger?.Logger.Information($"Выполнение КАСКАДНОЙ команды: {Name} => {RunAfter.Name}");
+                            UILogger.AddLog($"Выполнение КАСКАДНОЙ команды: {Name} => {RunAfter.Name}");
                             await RunAfter.ExecuteCommand(client, update, token);
                         }
                     }
@@ -158,7 +159,7 @@ namespace UITGBot.TGBot.CommandTypes
         {
             try
             {
-                Storage.Logger?.Logger.Information($"Загрузка файла {filePath}");
+                UILogger.AddLog($"Загрузка файла {filePath}");
                 if (System.IO.File.Exists(filePath)) return (false, $"Не удалось загрузить файл \"{filePath}\": файл уже существует");
                 var file = await client.GetFile(fileId);
                 if (file.FilePath == null)
@@ -169,15 +170,15 @@ namespace UITGBot.TGBot.CommandTypes
                 {
                     await client.GetInfoAndDownloadFile(file.FileId, saveStream);
                 }
-                Storage.Logger?.Logger.Information($"Проверка хеша дубликата файла {filePath}...");
+                UILogger.AddLog($"Проверка хеша дубликата файла {filePath}...");
                 //bool fileExist = FileExists(filePath);
                 //if (fileExist)
                 //{
                 //    File.Delete(filePath);
                 //    return (false, $"Не удалось загрузить файл \"{filePath}\": файл уже существует");
                 //}
-                //Storage.Logger?.Logger.Information($"Файл {filePath} уникален, поэтому сохранен");
-                Storage.Logger?.Logger.Information($"Файл {filePath} сохранен");
+                //UILogger.AddLog($"Файл {filePath} уникален, поэтому сохранен");
+                UILogger.AddLog($"Файл {filePath} сохранен");
                 return (true, $"Успешно загружен файл \n```\n{filePath}\n```");
             }
             catch (Exception e)
@@ -195,14 +196,14 @@ namespace UITGBot.TGBot.CommandTypes
             foreach (var file in Directory.GetFiles(containingDirectory))
             {
                 string fileHash = ComputeFileHash(file);
-                Storage.Logger?.Logger.Information($"Проверка хеша {fileHash}/{downloadHash} ({filepath} => {file})");
+                UILogger.AddLog($"Проверка хеша {fileHash}/{downloadHash} ({filepath} => {file})");
                 if (downloadHash == fileHash) return true;
             }
             return false;
         }
         private async Task<HashSet<string>> LoadExistingFileHashes()
         {
-            Storage.Logger?.Logger.Information($"Запуск вычисления хешей для директории {DirPath} (команда {Name})");
+            UILogger.AddLog($"Запуск вычисления хешей для директории {DirPath} (команда {Name})");
 
             var hashes = new HashSet<string>();
             var tasks = new List<Task<string>>();
@@ -210,7 +211,7 @@ namespace UITGBot.TGBot.CommandTypes
             string[] files = Directory.GetFiles(DirPath);
             foreach (var file in files)
             {
-                Storage.Logger?.Logger.Debug($"Высчитываетсмя хеш для файла: {file}");
+                UILogger.AddLog($"Высчитываетсмя хеш для файла: {file}", "DEBUG");
                 tasks.Add(Task.Run(() => ComputeFileHash(file)));
                 Task.Delay(20).Wait();
                 //string hash = ComputeFileHash(file);
@@ -222,7 +223,7 @@ namespace UITGBot.TGBot.CommandTypes
             {
                 hashes.Add(hashTask);
             }
-            Storage.Logger?.Logger.Information($"Хеши для для директории {DirPath} успешно вычислены (команда {Name})");
+            UILogger.AddLog($"Хеши для для директории {DirPath} успешно вычислены (команда {Name})");
             return hashes;
         }
 

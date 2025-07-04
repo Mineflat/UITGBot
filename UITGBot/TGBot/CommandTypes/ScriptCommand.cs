@@ -10,6 +10,7 @@ using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bots.Types;
 using UITGBot.Core;
+using UITGBot.Logging;
 
 namespace UITGBot.TGBot.CommandTypes
 {
@@ -50,7 +51,7 @@ namespace UITGBot.TGBot.CommandTypes
             if (!base.Verify()) return false;
             if (!System.IO.File.Exists(FilePath))
             {
-                Storage.Logger?.Logger.Error($"Команда {Name} не может быть применена, т.к. файл \"{FilePath}\" не существует. Команда отключена");
+                UILogger.AddLog($"Команда {Name} не может быть применена, т.к. файл \"{FilePath}\" не существует. Команда отключена", "ERROR");
                 return false;
             }
             return true;
@@ -125,7 +126,7 @@ namespace UITGBot.TGBot.CommandTypes
                 if (RunAfter == null) return;
                 if (RunAfter.Enabled)
                 {
-                    Storage.Logger?.Logger.Information($"Выполнение КАСКАДНОЙ команды: {Name} => {RunAfter.Name}");
+                    UILogger.AddLog($"Выполнение КАСКАДНОЙ команды: {Name} => {RunAfter.Name}");
                     await RunAfter.ExecuteCommand(client, update, token);
                 }
             }
@@ -140,7 +141,7 @@ namespace UITGBot.TGBot.CommandTypes
         {
             if (update.Message == null)
             {
-                Storage.Logger?.Logger.Error($"Получено неверное обновление: update.Message пуст (я хз как ты получил это сообщение, телеге видимо плохо)");
+                UILogger.AddLog($"Получено неверное обновление: update.Message пуст (я хз как ты получил это сообщение, телеге видимо плохо)", "ERROR");
                 return;
             }
             var processStartInfo = new ProcessStartInfo
@@ -167,7 +168,7 @@ namespace UITGBot.TGBot.CommandTypes
                     {
                         if (e.Data != null) error.AppendLine(e.Data);
                     };
-                    Storage.Logger?.Logger.Information($"Запуск скрипта \"{scriptPath}\"");
+                    UILogger.AddLog($"Запуск скрипта \"{scriptPath}\"");
                     process.Start();
                     process.BeginOutputReadLine();
                     process.BeginErrorReadLine();
@@ -176,9 +177,9 @@ namespace UITGBot.TGBot.CommandTypes
                     // Если timeoutInSeconds равен 0, то не задаём таймаут
                     if (timeoutInSeconds == 0)
                     {
-                        Storage.Logger?.Logger.Warning($"Этот скрипт будет выполняться без таймаута выполнения: \"{scriptPath}\"");
+                        UILogger.AddLog($"Этот скрипт будет выполняться без таймаута выполнения: \"{scriptPath}\"", "WARNING");
                         await Task.Run(() => process.WaitForExit());
-                        Storage.Logger?.Logger.Information($"Скрипт \"{scriptPath}\" закончил свое выполнение");
+                        UILogger.AddLog($"Скрипт \"{scriptPath}\" закончил свое выполнение");
                         string limitedString = output.ToString().Length > (4096 - randomReply.Length - 10) ? output.ToString()
                             .Substring(0, 4096 - randomReply.Length - 10) : output.ToString();
                         replyMessage = $"{randomReply}:\n```\n{limitedString}\n```";
@@ -188,7 +189,7 @@ namespace UITGBot.TGBot.CommandTypes
                         var waitForExitTask = Task.Run(() => process.WaitForExit());
                         if (await Task.WhenAny(Task.Delay(timeoutInSeconds * 1000), waitForExitTask) == waitForExitTask)
                         {
-                            Storage.Logger?.Logger.Information($"Скрипт \"{scriptPath}\" закончил свое выполнение");
+                            UILogger.AddLog($"Скрипт \"{scriptPath}\" закончил свое выполнение");
                             string limitedString = output.ToString().Length > (4096 - randomReply.Length - 10) ? output.ToString()
                                 .Substring(0, 4096 - randomReply.Length - 10) : output.ToString();
                             replyMessage = $"{randomReply}:\n```\n{limitedString}\n```";
@@ -196,7 +197,7 @@ namespace UITGBot.TGBot.CommandTypes
                         else
                         {
                             process.Kill(); // Если таймаут истёк, убиваем процесс
-                            Storage.Logger?.Logger.Warning($"Остановка выполнения скрипта \"{scriptPath}\": скрипт выполняется дольше {timeoutInSeconds} секунд");
+                            UILogger.AddLog($"Остановка выполнения скрипта \"{scriptPath}\": скрипт выполняется дольше {timeoutInSeconds} секунд", "WARNING");
                             string userWarning = "Мне пришлось остановить этот скрипт, потому что он выполнялся слишком долго. Однако, возможно, у меня есть часть его вывода:";
                             string limitedString = output.ToString().Length > (4096 - userWarning.Length - 10) ? output.ToString()
                                 .Substring(0, 4096 - userWarning.Length - 10) : output.ToString();
@@ -235,7 +236,7 @@ namespace UITGBot.TGBot.CommandTypes
                 }
                 catch (Exception e)
                 {
-                    Storage.Logger?.Logger.Error($"Ошибка выполнения скрипта \"{scriptPath}\":\n{e.Message}");
+                    UILogger.AddLog($"Ошибка выполнения скрипта \"{scriptPath}\":\n{e.Message}", "ERROR");
                     string limitedString = e.Message.ToString().Length > (4096 - scriptPath.Length - 10) ? e.Message.ToString()
                         .Substring(0, 4096 - $"Ошибка выполнения скрипта \"{scriptPath}\":".Length - 10) : e.Message.ToString();
                     await client.SendMessage(update.Message.Chat.Id,

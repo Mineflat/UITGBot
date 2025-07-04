@@ -8,6 +8,7 @@ using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bots.Types;
 using UITGBot.Core;
+using UITGBot.Logging;
 
 namespace UITGBot.TGBot.CommandTypes
 {
@@ -34,18 +35,18 @@ namespace UITGBot.TGBot.CommandTypes
             if (!base.Verify()) return false;
             if (!Directory.Exists(DirPath))
             {
-                Storage.Logger?.Logger.Error($"Команда {Name} не может быть применена, т.к. директория \"{DirPath}\" не существует. Команда отключена");
+                UILogger.AddLog($"Команда {Name} не может быть применена, т.к. директория \"{DirPath}\" не существует. Команда отключена", "ERROR");
                 return false;
             }
-            Storage.Logger?.Logger.Information($"[Команда][{Name}]: Запуск первичной синхронизации директории: {DirPath}");
+            UILogger.AddLog($"[Команда][{Name}]: Запуск первичной синхронизации директории: {DirPath}");
             Task.Run(async () => await StartFileMonitorAsync(cts.Token));
-            Storage.Logger?.Logger.Information($"[Команда][{Name}]: Завершила первичную инициализацию");
+            UILogger.AddLog($"[Команда][{Name}]: Завершила первичную инициализацию");
             return true;
         }
 
         private async Task StartFileMonitorAsync(CancellationToken token)
         {
-            Storage.Logger?.Logger.Information($"Команда {Name} установила таймер обновления директории через {IntervalMinutes} минут");
+            UILogger.AddLog($"Команда {Name} установила таймер обновления директории через {IntervalMinutes} минут");
 
             // Запускаем задачу на обновление списка файлов
             var fileMonitorTask = Task.Run(async () =>
@@ -56,9 +57,8 @@ namespace UITGBot.TGBot.CommandTypes
 
                     if (ListedFiles.Any()) // Если в списке есть файлы, сразу выполняем
                     {
-                        Console.WriteLine($"Файлы готовы, список не пуст: {ListedFiles.Count}.");
+                        UILogger.AddLog($"Файлы готовы, список не пуст: {ListedFiles.Count}");
                     }
-
                     await Task.Delay(TimeSpan.FromMinutes(IntervalMinutes), token); // Ждем 15 минут
                 }
             }, token);
@@ -66,14 +66,13 @@ namespace UITGBot.TGBot.CommandTypes
             // Немедленно проверяем и запускаем отправку файла, если список не пуст
             if (ListedFiles.Any())
             {
-                Console.WriteLine($"Файлы уже доступны, можно начать отправку: {ListedFiles.Count}.");
+                UILogger.AddLog($"Файлы уже доступны, можно начать отправку: {ListedFiles.Count}.");
             }
             else
             {
-                Console.WriteLine("Список файлов еще пуст.");
+                UILogger.AddLog("Список файлов еще пуст.", "WARNING");
             }
-
-            Storage.Logger?.Logger.Information("Таймер запущен.");
+            UILogger.AddLog("Таймер запущен.");
         }
 
 
@@ -81,7 +80,7 @@ namespace UITGBot.TGBot.CommandTypes
         {
             try
             {
-                Console.WriteLine($"Обновление списка файлов: {DateTime.Now}");
+                UILogger.AddLog($"Обновление списка файлов: {DateTime.Now}", "DEBUG");
 
                 // Собираем все файлы в список асинхронно
                 var newFiles = await GetFilesAsync(DirPath, Extentions);
@@ -99,17 +98,17 @@ namespace UITGBot.TGBot.CommandTypes
                     }
                 }
 
-                Console.WriteLine($"Добавлено файлов: {newFiles.Count()}, общее количество: {ListedFiles.Count}");
+                UILogger.AddLog($"Добавлено файлов: {newFiles.Count()}, общее количество: {ListedFiles.Count}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Ошибка при обновлении списка файлов: {ex.Message}");
+                UILogger.AddLog($"Ошибка при обновлении списка файлов: {ex.Message}", "ERROR");
             }
         }
 
         private async Task<List<string>> GetFilesAsync(string path, string[] extensions)
         {
-            Console.WriteLine($"Проверка директории: {path}, Маски: {string.Join(", ", extensions)}");
+            UILogger.AddLog($"Проверка директории: {path}, Маски: {string.Join(", ", extensions)}");
 
             var files = new List<string>();
 
@@ -136,7 +135,7 @@ namespace UITGBot.TGBot.CommandTypes
         {
             if (update.Message == null)
             {
-                Storage.Logger?.Logger.Error($"Получено неверное обновление: update.Message пуст (я хз как ты получил это сообщение, телеге видимо плохо)");
+                UILogger.AddLog($"Получено неверное обновление: update.Message пуст (я хз как ты получил это сообщение, телеге видимо плохо)", "ERROR");
                 return;
             }
             try
@@ -160,11 +159,11 @@ namespace UITGBot.TGBot.CommandTypes
                 //    return;
                 //}
                 //string filePath = fileSelectionResult.errorMessage;
-                Console.WriteLine($"Количество файлов в списке: {ListedFiles.Count}");
+                UILogger.AddLog($"Количество файлов в списке: {ListedFiles.Count}");
                 string filePath = ListedFiles[CryptoRandomizer.GetRandom(0, ListedFiles.Count - 1)];
                 if (!System.IO.File.Exists(filePath))
                 {
-                    Storage.Logger?.Logger.Error($"Ошибка выполнения команды {this.Name}: Файл \"{filePath}\" не существует");
+                    UILogger.AddLog($"Ошибка выполнения команды {this.Name}: Файл \"{filePath}\" не существует", "ERROR");
                     await ExecuteCommand(client, update, token).ConfigureAwait(true);
                     return;
                 }
@@ -180,7 +179,7 @@ namespace UITGBot.TGBot.CommandTypes
                         //replyParameters: update.Message.MessageId, // Делаем сообщение ответным
                         cancellationToken: token
                     );
-                    Storage.Logger?.Logger.Information($"Успешно отправлена картинка \"{filePath}\" в чат {update.Message.Chat.Id} (личные сообщения)");
+                    UILogger.AddLog($"Успешно отправлена картинка \"{filePath}\" в чат {update.Message.Chat.Id} (личные сообщения)");
                     return;
                 }
                 await client.SendPhoto(
@@ -190,7 +189,7 @@ namespace UITGBot.TGBot.CommandTypes
                     replyParameters: update.Message.MessageId, // Делаем сообщение ответным
                     cancellationToken: token
                 );
-                Storage.Logger?.Logger.Information($"Успешно отправлена картинка \"{filePath}\" в чат {update.Message.Chat.Id} (публичный чат)");
+                UILogger.AddLog($"Успешно отправлена картинка \"{filePath}\" в чат {update.Message.Chat.Id} (публичный чат)");
 
             }
             catch (Exception e)
@@ -203,7 +202,7 @@ namespace UITGBot.TGBot.CommandTypes
             {
                 if (RunAfter.Enabled)
                 {
-                    Storage.Logger?.Logger.Information($"Выполнение КАСКАДНОЙ команды: {Name} => {RunAfter.Name}");
+                    UILogger.AddLog($"Выполнение КАСКАДНОЙ команды: {Name} => {RunAfter.Name}");
                     await RunAfter.ExecuteCommand(client, update, token);
                 }
             }

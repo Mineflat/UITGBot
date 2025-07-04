@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using UITGBot.Core;
+using UITGBot.Logging;
 
 namespace UITGBot.TGBot.CommandTypes
 {
@@ -24,7 +25,7 @@ namespace UITGBot.TGBot.CommandTypes
             if (!base.Verify()) return false;
             if (!File.Exists(FilePath))
             {
-                Storage.Logger?.Logger.Error($"Команда {Name} не может быть применена, т.к. файл \"{FilePath}\" не существует. Команда отключена");
+                UILogger.AddLog($"Команда {Name} не может быть применена, т.к. файл \"{FilePath}\" не существует. Команда отключена", "ERROR");
                 return false;
             }
             return true;
@@ -38,14 +39,14 @@ namespace UITGBot.TGBot.CommandTypes
 
             if (update.Message == null)
             {
-                Storage.Logger?.Logger.Error($"Получено неверное обновление: update.Message пуст (я хз как ты получил это сообщение, телеге видимо плохо)");
+                UILogger.AddLog($"Получено неверное обновление: update.Message пуст (я хз как ты получил это сообщение, телеге видимо плохо)", "ERROR");
                 return;
             }
             try
             {
                 if (!File.Exists(FilePath))
                 {
-                    Storage.Logger?.Logger.Error($"Ошибка выполнения команды {this.Name}: файл не существует: \"{FilePath}\"");
+                    UILogger.AddLog($"Ошибка выполнения команды {this.Name}: файл не существует: \"{FilePath}\"", "ERROR");
                     return;
                 }
                 await using var stream = new FileStream(FilePath, FileMode.Open, FileAccess.Read);
@@ -59,7 +60,7 @@ namespace UITGBot.TGBot.CommandTypes
                         caption: replyText,
                         cancellationToken: token
                     );
-                    Storage.Logger?.Logger.Information($"Успешно отправлен файл \"{FilePath}\" в чат {update.Message.Chat.Id} (личные сообщения)");
+                    UILogger.AddLog($"Успешно отправлен файл \"{FilePath}\" в чат {update.Message.Chat.Id} (личные сообщения)");
                 }
                 else
                 {
@@ -70,14 +71,14 @@ namespace UITGBot.TGBot.CommandTypes
                         replyParameters: update.Message.MessageId, // Делаем сообщение ответным
                         cancellationToken: token
                     );
-                    Storage.Logger?.Logger.Information($"Успешно отправлен файл \"{FilePath}\" в чат {update.Message.Chat.Id} (публичный чат)");
+                    UILogger.AddLog($"Успешно отправлен файл \"{FilePath}\" в чат {update.Message.Chat.Id} (публичный чат)");
                 }
                 // Выполнение каскадной команды
                 if (RunAfter != null)
                 {
                     if (RunAfter.Enabled)
                     {
-                        Storage.Logger?.Logger.Information($"Выполнение КАСКАДНОЙ команды: {Name} => {RunAfter.Name}");
+                        UILogger.AddLog($"Выполнение КАСКАДНОЙ команды: {Name} => {RunAfter.Name}");
                         await RunAfter.ExecuteCommand(client, update, token);
                     }
                 }

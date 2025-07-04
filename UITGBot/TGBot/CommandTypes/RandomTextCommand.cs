@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using UITGBot.Core;
+using UITGBot.Logging;
 
 namespace UITGBot.TGBot.CommandTypes
 {
@@ -24,7 +25,7 @@ namespace UITGBot.TGBot.CommandTypes
             if (!base.Verify()) return false;
             if (!File.Exists(FilePath))
             {
-                Storage.Logger?.Logger.Error($"Команда {Name} не может быть применена, т.к. файл \"{FilePath}\" не существует. Команда отключена");
+                UILogger.AddLog($"Команда {Name} не может быть применена, т.к. файл \"{FilePath}\" не существует. Команда отключена", "ERROR");
                 return false;
             }
             return true;
@@ -49,7 +50,7 @@ namespace UITGBot.TGBot.CommandTypes
                 {
                     if (RunAfter.Enabled)
                     {
-                        Storage.Logger?.Logger.Information($"Выполнение КАСКАДНОЙ команды: {Name} => {RunAfter.Name}");
+                        UILogger.AddLog($"Выполнение КАСКАДНОЙ команды: {Name} => {RunAfter.Name}");
                         await RunAfter.ExecuteCommand(client, update, token);
                     }
                 }

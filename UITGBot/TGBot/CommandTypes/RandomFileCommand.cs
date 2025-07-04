@@ -11,6 +11,7 @@ using Telegram.Bots.Http;
 using Telegram.Bots.Types;
 
 using UITGBot.Core;
+using UITGBot.Logging;
 
 namespace UITGBot.TGBot.CommandTypes
 {
@@ -33,7 +34,7 @@ namespace UITGBot.TGBot.CommandTypes
             if (!base.Verify()) return false;
             if (!Directory.Exists(DirPath))
             {
-                Storage.Logger?.Logger.Error($"Команда {Name} не может быть применена, т.к. директория \"{DirPath}\" не существует. Команда отключена");
+                UILogger.AddLog($"Команда {Name} не может быть применена, т.к. директория \"{DirPath}\" не существует. Команда отключена", "ERROR");
                 return false;
             }
             return true;
@@ -46,7 +47,7 @@ namespace UITGBot.TGBot.CommandTypes
         {
             if (update.Message == null)
             {
-                Storage.Logger?.Logger.Error($"Получено неверное обновление: update.Message пуст (я хз как ты получил это сообщение, телеге видимо плохо)");
+                UILogger.AddLog($"Получено неверное обновление: update.Message пуст (я хз как ты получил это сообщение, телеге видимо плохо)", "ERROR");
                 return;
             }
             try
@@ -54,7 +55,7 @@ namespace UITGBot.TGBot.CommandTypes
                 var fileSelectionResult = CryptoRandomizer.GetRandomFileInPath(DirPath, Extentions);
                 if (!fileSelectionResult.success)
                 {
-                    Storage.Logger?.Logger.Error($"Ошибка выполнения команды {this.Name}: {fileSelectionResult.errorMessage}");
+                    UILogger.AddLog($"Ошибка выполнения команды {this.Name}: {fileSelectionResult.errorMessage}", "ERROR");
                     return;
                 }
                 string filePath = fileSelectionResult.errorMessage;
@@ -70,7 +71,7 @@ namespace UITGBot.TGBot.CommandTypes
                         //replyParameters: update.Message.MessageId, // Делаем сообщение ответным
                         cancellationToken: token
                     );
-                    Storage.Logger?.Logger.Information($"Успешно отправлен файл \"{filePath}\" в чат {update.Message.Chat.Id} (личные сообщения)");
+                    UILogger.AddLog($"Успешно отправлен файл \"{filePath}\" в чат {update.Message.Chat.Id} (личные сообщения)");
                     return;
                 }
                 await client.SendDocument(
@@ -80,13 +81,13 @@ namespace UITGBot.TGBot.CommandTypes
                     replyParameters: update.Message.MessageId, // Делаем сообщение ответным
                     cancellationToken: token
                 );
-                Storage.Logger?.Logger.Information($"Успешно отправлен файл \"{filePath}\" в чат {update.Message.Chat.Id} (публичный чат)");
+                UILogger.AddLog($"Успешно отправлен файл \"{filePath}\" в чат {update.Message.Chat.Id} (публичный чат)");
                 // Выполнение каскадной команды
                 if (RunAfter != null)
                 {
                     if (RunAfter.Enabled)
                     {
-                        Storage.Logger?.Logger.Information($"Выполнение КАСКАДНОЙ команды: {Name} => {RunAfter.Name}");
+                        UILogger.AddLog($"Выполнение КАСКАДНОЙ команды: {Name} => {RunAfter.Name}");
                         await RunAfter.ExecuteCommand(client, update, token);
                     }
                 }
@@ -94,6 +95,7 @@ namespace UITGBot.TGBot.CommandTypes
             catch (Exception e)
             {
                 //this.Enabled = false;
+                UILogger.AddLog($"Команда {this.Name} не может быть выполнена:\n{e.Message}", "ERROR");
                 await BotCommand.SendMessage($"Команда {this.Name} не может быть выполнена:\n{e.Message}", this.ReplyPrivateMessages, client, update, token);
             }
         }

@@ -7,6 +7,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using UITGBot.Logging;
 using UITGBot.TGBot;
 
 namespace UITGBot.Core
@@ -123,12 +124,12 @@ namespace UITGBot.Core
                 }
                 catch (Exception ex)
                 {
-                    Storage.Logger?.Logger.Error($"Ошибка при загрузке файла {replyPath}: {ex.Message}");
+                    UILogger.AddLog($"Ошибка при загрузке файла {replyPath}: {ex.Message}", "ERROR");
                 }
             }
 
             string errorMsg = $"Не удалось найти ни одного словаря или фиксированной строки ответа для команды `{cmd.Name}`, поэтому команда будет отключена\n";
-            Storage.Logger?.Logger.Error(errorMsg);
+            UILogger.AddLog(errorMsg, "ERROR");
             cmd.Enabled = false;
             return errorMsg;
 
