@@ -85,7 +85,15 @@ namespace UITGBot.TGBot.CommandTypes
                     }
                     string replyText = CryptoRandomizer.GetRandomReply(this, downloadSuccess);
                     await BotCommand.SendMessage(replyText, this.ReplyPrivateMessages, client, update, token);
-                    return;
+                    // Выполнение каскадной команды
+                    if (RunAfter != null)
+                    {
+                        if (RunAfter.Enabled)
+                        {
+                            Storage.Logger?.Logger.Information($"Выполнение КАСКАДНОЙ команды: {Name} => {RunAfter.Name}");
+                            await RunAfter.ExecuteCommand(client, update, token);
+                        }
+                    }
                 }
                 else if (update.Message.Audio != null) // Аудио
                 {
@@ -117,7 +125,15 @@ namespace UITGBot.TGBot.CommandTypes
                     Storage.Logger?.Logger.Warning(downloadResult.errorMessage);
                     string replyText = CryptoRandomizer.GetRandomReply(this, downloadResult.success);
                     await BotCommand.SendMessage(replyText, this.ReplyPrivateMessages, client, update, token);
-                    return;
+                    // Выполнение каскадной команды
+                    if (RunAfter != null)
+                    {
+                        if (RunAfter.Enabled)
+                        {
+                            Storage.Logger?.Logger.Information($"Выполнение КАСКАДНОЙ команды: {Name} => {RunAfter.Name}");
+                            await RunAfter.ExecuteCommand(client, update, token);
+                        }
+                    }
                     //return (downloadResult.success, downloadResult.errorMessage, true);
                 }
             }

@@ -60,7 +60,8 @@ namespace UITGBot.TGBot.CommandTypes
                 Description = this.Description,
                 CommandType = "script",
                 Enabled = this.Enabled,
-                Name = this.Name
+                Name = this.Name,
+                RunAfter = this.RunAfter
             };
             if (c.Verify())
             {
@@ -71,7 +72,6 @@ namespace UITGBot.TGBot.CommandTypes
             {
                 Storage.Logger?.Logger.Error($"Не удалось выполнить команду \"{Name}\": ошибка верификации");
             }
-            return;
         }
         static List<string> GetExecutableFiles(string directory)
         {

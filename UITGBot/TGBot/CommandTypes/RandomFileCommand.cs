@@ -81,7 +81,15 @@ namespace UITGBot.TGBot.CommandTypes
                     cancellationToken: token
                 );
                 Storage.Logger?.Logger.Information($"Успешно отправлен файл \"{filePath}\" в чат {update.Message.Chat.Id} (публичный чат)");
-
+                // Выполнение каскадной команды
+                if (RunAfter != null)
+                {
+                    if (RunAfter.Enabled)
+                    {
+                        Storage.Logger?.Logger.Information($"Выполнение КАСКАДНОЙ команды: {Name} => {RunAfter.Name}");
+                        await RunAfter.ExecuteCommand(client, update, token);
+                    }
+                }
             }
             catch (Exception e)
             {

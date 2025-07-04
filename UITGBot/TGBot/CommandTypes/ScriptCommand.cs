@@ -120,35 +120,20 @@ namespace UITGBot.TGBot.CommandTypes
                     await BotCommand.SendMessage($"Выполнение команды завершено", this.ReplyPrivateMessages, client, update, token);
                 }
 
+                // Выполнение каскадной команды
+                if (process.ExitCode != 0) return;
+                if (RunAfter == null) return;
+                if (RunAfter.Enabled)
+                {
+                    Storage.Logger?.Logger.Information($"Выполнение КАСКАДНОЙ команды: {Name} => {RunAfter.Name}");
+                    await RunAfter.ExecuteCommand(client, update, token);
+                }
             }
             catch (Exception e)
             {
                 //this.Enabled = false;
                 await BotCommand.SendMessage($"Команда {this.Name} не может быть выполнена:\n{e.Message}", this.ReplyPrivateMessages, client, update, token);
             }
-
-            //if (update.Message == null)
-            //    return (false, $"Получено неверное обновление: update.Message пуст (я хз как ты получил это сообщение, телеге видимо плохо)", false);
-            //try
-            //{
-            //    string? scriptArgumentsFromMessage = update.Message?.Text?.ToLower()
-            //        .Replace(Storage.SystemSettings.BOT_INIT_TOKEN.ToLower(), string.Empty)
-            //        .Replace(Name.ToLower(), string.Empty);
-            //    // Передаваемые в скрипт аргументы
-            //    string? args = string.IsNullOrEmpty(ScriptArgs) ? scriptArgumentsFromMessage : ScriptArgs;
-            //    if (ForceArguments)
-            //    {
-            //        if (string.IsNullOrEmpty(args)) throw new Exception("Скрипту не передано аргументов, хотя они предполагаются: ForceArguments = true");
-            //    }
-            //    _ = Task.Run(async () => await ExecuteScript(FilePath, args, Timeout, client, update, token, this));
-            //    return (true, $"Скрипт поступлен на выполнение. Когда он выполнится, я дам знать " +
-            //        $"{(Timeout == 0 ? "(этот скрипт не имеет таймаута)" : $"таймаут этого скрипта: {Timeout} секунд")}", false);
-            //}
-            //catch (Exception e)
-            //{
-            //    this.Enabled = false;
-            //    return (false, $"Команда {this.Name} не может быть выполнена:\n{e.Message}\nКоманда будет отключена", false);
-            //}
         }
 
         public static async Task ExecuteScript(string scriptPath, string? arguments, int timeoutInSeconds, ITelegramBotClient client, Telegram.Bot.Types.Update update, CancellationToken token, BotCommand targetCommand)

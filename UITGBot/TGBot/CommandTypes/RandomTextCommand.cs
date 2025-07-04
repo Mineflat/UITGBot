@@ -44,6 +44,15 @@ namespace UITGBot.TGBot.CommandTypes
                 if (string.IsNullOrEmpty(reply)) throw new Exception("В указанном файле отсутствует текст");
                 if (reply.Length > 4096) throw new Exception("Текст в указанном файле имеет длину более 4096 символов (ограничение Телеграмм)");
                 await BotCommand.SendMessage(reply, this.ReplyPrivateMessages, client, update, token);
+                // Выполнение каскадной команды
+                if (RunAfter != null)
+                {
+                    if (RunAfter.Enabled)
+                    {
+                        Storage.Logger?.Logger.Information($"Выполнение КАСКАДНОЙ команды: {Name} => {RunAfter.Name}");
+                        await RunAfter.ExecuteCommand(client, update, token);
+                    }
+                }
             }
             catch (Exception e)
             {

@@ -125,6 +125,16 @@ namespace UITGBot.TGBot
                     await proccessResult.SelectedCommand.ExecuteCommand(client, update, token);
                     Console.WriteLine(new string('-', Console.WindowWidth - 1));
                     Console.WriteLine();
+
+                    // Выполнение каскадной команды (независимо от результата выполнения предыдущей команды)
+                    //if (proccessResult.SelectedCommand.RunAfter != null)
+                    //{
+                    //    if (proccessResult.SelectedCommand.RunAfter.Enabled)
+                    //    {
+                    //        Storage.Logger?.Logger.Information($"Выполнение КАСКАДНОЙ команды: {proccessResult.SelectedCommand.Name} => {proccessResult.SelectedCommand.RunAfter.Name}");
+                    //        await proccessResult.SelectedCommand.RunAfter.ExecuteCommand(client, update, token);
+                    //    }
+                    //}
                 }
                 catch (Exception e)
                 {

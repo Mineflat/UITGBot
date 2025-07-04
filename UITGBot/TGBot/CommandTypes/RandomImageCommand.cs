@@ -198,6 +198,15 @@ namespace UITGBot.TGBot.CommandTypes
                 //this.Enabled = false;
                 await BotCommand.SendMessage($"Команда {this.Name} не может быть выполнена:\n{e.Message}", this.ReplyPrivateMessages, client, update, token);
             }
+            // Выполнение каскадной команды
+            if (RunAfter != null)
+            {
+                if (RunAfter.Enabled)
+                {
+                    Storage.Logger?.Logger.Information($"Выполнение КАСКАДНОЙ команды: {Name} => {RunAfter.Name}");
+                    await RunAfter.ExecuteCommand(client, update, token);
+                }
+            }
         }
     }
 }
