@@ -129,8 +129,8 @@ namespace UITGBot.TGBot
                 try
                 {
                     UILogger.AddLog($"Выполнение команды \"{proccessResult.SelectedCommand.Name}\" пользователем {userName} ...");
-                    await proccessResult.SelectedCommand.ExecuteCommand(client, update, token);
                     botMessagesProccessed++;
+                    await proccessResult.SelectedCommand.ExecuteCommand(client, update, token);
                     // Выполнение каскадной команды (независимо от результата выполнения предыдущей команды)
                     //if (proccessResult.SelectedCommand.RunAfter != null)
                     //{

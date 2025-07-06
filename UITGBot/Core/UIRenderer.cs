@@ -174,7 +174,7 @@ namespace UITGBot.Core
                 .AddItem("Счетчик ошибок:", TGBotClient.botErrorsLeft, Color.Red1)
                 .AddItem("Получено сообщений:", TGBotClient.botMessagesReceived, Color.DodgerBlue2)
                 .AddItem("Из них было команд:", TGBotClient.botMessagesProccessed, Color.DeepSkyBlue1)
-                .AddItem("Активныхз команд:", TGBotClient.botActiveActionsCount, Color.Green3)
+                .AddItem("Активных команд:", TGBotClient.botActiveActionsCount, Color.Green3)
                 .AddItem("Всего команд:", TGBotClient.botActionsCount, Color.LightSkyBlue3_1)
                 .CenterLabel();
             a.Label = "[bold]Информация[/]";

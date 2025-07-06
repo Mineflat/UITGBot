@@ -17,33 +17,33 @@ namespace UITGBot.Logging
         public static void AddLog(string message, string severity = "INFORMATION")
         {
             severity = severity.ToUpper();
-            string logString = $"{severity}: {message}";
+            string logString = $"{severity} {message}";
             switch (severity.Trim().ToUpper())
             {
                 case "INFORMATION":
-                    logString = logString.Replace($"{severity}", $"[[[yellow]{severity}[/]]][[{DateTime.Now.ToString("dd.MM.yyyy hh:mm:ss")}]]");
+                    logString = logString.Replace($"{severity}", $"[yellow][[{severity}]][[{DateTime.Now.ToString("dd.MM.yyyy hh:mm:ss")}]]:[/]");
                     Storage.Logger?.Logger.Information(message);
                     break;
                 case "WARNING":
-                    logString = logString.Replace($"{severity}", $"[[[darkorange]{severity}[/]]][[{DateTime.Now.ToString("dd.MM.yyyy hh:mm:ss")}]]");
+                    logString = logString.Replace($"{severity}", $"[darkorange][[{severity}]][[{DateTime.Now.ToString("dd.MM.yyyy hh:mm:ss")}]]:[/]");
                     Storage.Logger?.Logger.Warning(message);
                     break;
                 case "ERROR":
-                    logString = logString.Replace($"{severity}", $"[[[red1]{severity}[/]]][[{DateTime.Now.ToString("dd.MM.yyyy hh:mm:ss")}]]");
+                    logString = logString.Replace($"{severity}", $"[red1][[{severity}]][[{DateTime.Now.ToString("dd.MM.yyyy hh:mm:ss")}]]:[/]");
                     Storage.Logger?.Logger.Error(message);
                     break;
                 case "FATAL":
-                    logString = logString.Replace($"{severity}", $"[[[darkred]{severity}[/]]][[{DateTime.Now.ToString("dd.MM.yyyy hh:mm:ss")}]]");
+                    logString = logString.Replace($"{severity}", $"[darkred][[{severity}]][[{DateTime.Now.ToString("dd.MM.yyyy hh:mm:ss")}]]:[/]");
                     Storage.Logger?.Logger.Fatal(message);
                     Program.OnPanic();
                     break;
                 case "MESSAGE":
                 case "VERBOSE":
-                    logString = logString.Replace($"{severity}", $"[[[skyblue3]{severity}[/]]][[{DateTime.Now.ToString("dd.MM.yyyy hh:mm:ss")}]]");
+                    logString = logString.Replace($"{severity}", $"[skyblue3][[{severity}]][[{DateTime.Now.ToString("dd.MM.yyyy hh:mm:ss")}]]:[/]");
                     Storage.Logger?.Logger.Verbose(message);
                     break;
                 default:
-                    logString = logString.Replace($"{severity}", $"[[[grey37]{severity}[/]]][[{DateTime.Now.ToString("dd.MM.yyyy hh:mm:ss")}]]");
+                    logString = logString.Replace($"{severity}", $"[grey37][[{severity}]][[{DateTime.Now.ToString("dd.MM.yyyy hh:mm:ss")}]]:[/]");
                     Storage.Logger?.Logger.Debug(message);
                     break;
             }
