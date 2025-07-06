@@ -17,7 +17,7 @@ namespace UITGBot.Logging
         public static void AddLog(string message, string severity = "INFORMATION")
         {
             severity = severity.ToUpper();
-            string logString = $"{severity} {message}";
+            string logString = $"{severity} {message.Replace("[", "[[").Replace("]", "]]")}";
             switch (severity.Trim().ToUpper())
             {
                 case "INFORMATION":
@@ -57,8 +57,15 @@ namespace UITGBot.Logging
         /// </summary>
         /// <param name="recordCount">Количество получаемых записей</param>
         /// <returns></returns>
-        public static List<string> GetLogs(int recordCount = 30) => Storage.LogBuffer.TakeLast(recordCount).ToList<string>();
-
-
+        public static List<string> GetLogs(int recordCount = 30)
+        {
+            int newlines = 0;
+            foreach (string logString in Storage.LogBuffer)
+            {
+                newlines = logString.Count(x => x == '\n');
+            }
+            if (recordCount < newlines) return Storage.LogBuffer.TakeLast(recordCount).ToList<string>();
+            return Storage.LogBuffer.TakeLast(recordCount - newlines).ToList<string>();
+        }
     }
 }

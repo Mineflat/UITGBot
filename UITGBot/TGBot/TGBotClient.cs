@@ -91,11 +91,12 @@ namespace UITGBot.TGBot
                                                    // Проверка ID пользователя и поиск юзернейма
             if (userID == null) return;
             if (update.Message == null) return;
+            
             string userName = string.IsNullOrEmpty(update.Message.From?.Username)
                 ? update.Message.From?.Id.ToString() ?? "Unknown"
                 : update.Message.From.Username;
             Storage.Statisticks.botMessagesReceived++;
-
+            if (update.Message.ForwardFrom != null) return; // Чтобы бот не воспринимал пересланные сообщения как команды
             // Обработка текста сообщения (проверка на пустоту)
             string? msgText = update.Message.Text ?? update.Message.Caption;
             if (string.IsNullOrEmpty(msgText)) return;

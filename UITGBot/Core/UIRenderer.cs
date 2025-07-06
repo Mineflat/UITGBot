@@ -242,7 +242,7 @@ namespace UITGBot.Core
 
             // правая колонка → две строки: по одной диаграмме
             layout["right"].SplitRows(
-                new Layout("statA") { Ratio = 1 },
+                new Layout("statA") { Size = 10 },
                 new Layout("statB") { Ratio = 1 }
             );
 

@@ -22,6 +22,7 @@ namespace UITGBot
         public static void OnPanic()
         {
             _resetEvent.Set();
+            Environment.Exit(1);
         }
         /// <summary>
         /// Этот метод спросит необходимую информацию у пользователя, зашифрует ее и выведет ему на экран, чтобы тот мог внести полученные значения в конфиг.
