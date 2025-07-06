@@ -80,7 +80,7 @@ namespace UITGBot.TGBot.CommandTypes
         {
             try
             {
-                UILogger.AddLog($"Обновление списка файлов: {DateTime.Now}", "DEBUG");
+                UILogger.AddLog($"Обновление списка файлов для команды {Name}: {DateTime.Now}", "DEBUG");
 
                 // Собираем все файлы в список асинхронно
                 var newFiles = await GetFilesAsync(DirPath, Extentions);

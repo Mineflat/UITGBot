@@ -160,6 +160,7 @@ namespace UITGBot.Core
                 .Expand();
             actionsTable.AddColumn(new TableColumn(string.Empty));
             actionsTable.AddRow("Управление списком действий");
+            actionsTable.AddRow("Переписываться в чате от имени бота");
             actionsTable.AddRow("Перезапуск бота");
             actionsTable.AddRow("Остановка бота и выход");
             var actionsPanel = new Panel(actionsTable)
