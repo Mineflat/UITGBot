@@ -59,13 +59,27 @@ namespace UITGBot.Logging
         /// <returns></returns>
         public static List<string> GetLogs(int recordCount = 30)
         {
-            int newlines = 0;
-            foreach (string logString in Storage.LogBuffer)
+            var result = new List<string>();
+            int usedLines = 0;
+
+            // идём с конца буфера, чтобы взять последние записи
+            for (int i = Storage.LogBuffer.Count - 1; i >= 0; i--)
             {
-                newlines = logString.Count(x => x == '\n');
+                var entry = Storage.LogBuffer[i];
+                // считаем, во сколько физических строк развернётся entry
+                int linesInEntry = entry.Count(ch => ch == '\n') + 1;
+
+                // если добавление этого entry превысит лимит — выходим
+                if (usedLines + linesInEntry > recordCount)
+                    break;
+
+                result.Add(entry);
+                usedLines += linesInEntry;
             }
-            if (recordCount < newlines) return Storage.LogBuffer.TakeLast(recordCount).ToList<string>();
-            return Storage.LogBuffer.TakeLast(recordCount - newlines).ToList<string>();
+
+            // сейчас result в обратном порядке — разворачиваем
+            result.Reverse();
+            return result;
         }
     }
 }
