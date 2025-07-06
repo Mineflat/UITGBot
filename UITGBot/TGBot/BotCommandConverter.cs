@@ -7,6 +7,7 @@ using Newtonsoft.Json.Linq;
 using System.Threading.Tasks;
 using UITGBot.Core;
 using UITGBot.TGBot.CommandTypes;
+using Polly;
 
 namespace UITGBot.TGBot
 {
@@ -38,8 +39,41 @@ namespace UITGBot.TGBot
                 "simple" => jsonObject.ToObject<SimpleCommand>(serializer),
                 _ => throw new JsonException($"Неизвестный тип команды: {type}")
             };
-            TGBotClient.botActionsCount++;
-            if (command != null && command.Enabled) TGBotClient.botActiveActionsCount++;
+            Storage.Statisticks.botActionsCount++;
+            if (command != null && command.Enabled) Storage.Statisticks.botActiveActionsCount++;
+            switch (command?.CommandType.ToLower().Trim())
+            {
+                case "full_text":
+                    Storage.Statisticks.ActionsCountTypeOf_full_text++;
+                    break;
+                case "file":
+                    Storage.Statisticks.ActionsCountTypeOf_file++;
+                    break;
+                case "image":
+                    Storage.Statisticks.ActionsCountTypeOf_image++;
+                    break;
+                case "script":
+                    Storage.Statisticks.ActionsCountTypeOf_script++;
+                    break;
+                case "random_text":
+                    Storage.Statisticks.ActionsCountTypeOf_random_text++;
+                    break;
+                case "random_file":
+                    Storage.Statisticks.ActionsCountTypeOf_random_file++;
+                    break;
+                case "random_image":
+                    Storage.Statisticks.ActionsCountTypeOf_random_image++;
+                    break;
+                case "random_script":
+                    Storage.Statisticks.ActionsCountTypeOf_random_script++;
+                    break;
+                case "remote_file":
+                    Storage.Statisticks.ActionsCountTypeOf_remote_file++;
+                    break;
+                case "simple":
+                    Storage.Statisticks.ActionsCountTypeOf_simple++;
+                    break;
+            }
             return command!;
         }
         public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)

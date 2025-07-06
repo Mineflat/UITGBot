@@ -147,81 +147,113 @@ namespace UITGBot.Core
         {
             Console.Clear();
             Console.CursorVisible = false;
+
             // 1) Заголовок на всю ширину
             var headerPanel = new Panel($"[bold]Панель управления ботом[/] [green1]@{TGBotClient.BotName}[/]")
                 .Border(BoxBorder.Rounded)
                 .BorderColor(Color.LightSkyBlue1)
                 .Expand();
+
             // 2) Левая колонка: меню действий
             var actionsTable = new Table()
                 .HideHeaders()
                 .Border(TableBorder.Minimal)
                 .BorderColor(Color.PaleTurquoise1)
                 .Expand();
-            actionsTable.AddColumn(new TableColumn(string.Empty));
+            actionsTable.AddColumn(string.Empty);
             actionsTable.AddRow("Управление списком действий");
             actionsTable.AddRow("Переписываться в чате от имени бота");
             actionsTable.AddRow("Перезапуск бота");
             actionsTable.AddRow("Остановка бота и выход");
+
             var actionsPanel = new Panel(actionsTable)
-                .Header("[bold]        Меню действий    [/]")
+                .Header("[bold]Меню действий[/]")
                 .Border(BoxBorder.Rounded)
                 .BorderColor(Color.PaleTurquoise1)
                 .Expand();
-            // 3) Правая колонка: информация
 
-            var a = new BarChart()
-                .CenterLabel()
+            // 3) Правая колонка: две диаграммы, которые займут по пол-колонки
+            // 3.1) Первая диаграмма
+            var chartA = new BarChart()
                 .AddItem("Счетчик ошибок:", TGBotClient.botErrorsLeft, Color.Red1)
-                .AddItem("Получено сообщений:", TGBotClient.botMessagesReceived, Color.DodgerBlue2)
-                .AddItem("Из них было команд:", TGBotClient.botMessagesProccessed, Color.DeepSkyBlue1)
-                .AddItem("Активных команд:", TGBotClient.botActiveActionsCount, Color.Green3)
-                .AddItem("Всего команд:", TGBotClient.botActionsCount, Color.LightSkyBlue3_1)
-                .CenterLabel();
-            a.Label = "[bold]Информация[/]";
-            
-            var infoPannel = new Panel(a)
-                .BorderColor(Color.PaleTurquoise1)
-                .Border(BoxBorder.Rounded);
-            infoPannel.Expand();
+                .AddItem("Получено сообщений:", Storage.Statisticks.botMessagesReceived, Color.DodgerBlue2)
+                .AddItem("Из них было команд:", Storage.Statisticks.botMessagesProccessed, Color.DeepSkyBlue1)
+                .AddItem("Активных команд:", Storage.Statisticks.botActiveActionsCount, Color.Green3)
+                .AddItem("Всего команд:", Storage.Statisticks.botActionsCount, Color.LightSkyBlue3_1);
+            chartA.Label = "[underline][bold]Информация[/][/]\n";
+            chartA.LabelAlignment = Justify.Right;
 
-            // 4) Подвал: системные логи
-            // Предполагаем, что UILogger.GetLogs() возвращает List<string>
-            int logHeigth = Console.WindowHeight / 2;
-            var logs = UILogger.GetLogs((int)(logHeigth - 10));
+            var panelA = new Panel(chartA)
+                .Border(BoxBorder.Rounded)
+                .BorderColor(Color.PaleTurquoise1)
+                .Expand();
+
+            // 3.2) Вторая диаграмма
+            var chartB = new BarChart()
+                .AddItem("Простая текстовая команда ([green1]simple[/]):", Storage.Statisticks.ActionsCountTypeOf_simple, Color.DodgerBlue1)
+                .AddItem("Текст из файла по указанному пути ([green1]full_text[/]):", Storage.Statisticks.ActionsCountTypeOf_full_text, Color.Green3_1)
+                .AddItem("Произвольный текст из файла ([green1]random_text[/]):", Storage.Statisticks.ActionsCountTypeOf_random_text, Color.DodgerBlue1)
+                .AddItem("Отправка изображения ([green1]image[/]):", Storage.Statisticks.ActionsCountTypeOf_image, Color.Green3_1)
+                .AddItem("Отправка произвольного изображения ([green1]random_image[/]):", Storage.Statisticks.ActionsCountTypeOf_random_image, Color.DodgerBlue1)
+                .AddItem("Отправка файла ([green1]file[/]):", Storage.Statisticks.ActionsCountTypeOf_file, Color.Green3_1)
+                .AddItem("Отправка произвольного файла ([green1]random_file[/]):", Storage.Statisticks.ActionsCountTypeOf_random_file, Color.DodgerBlue1)
+                .AddItem("Выполнение скрипта ([green1]script[/]):", Storage.Statisticks.ActionsCountTypeOf_script, Color.Green3_1)
+                .AddItem("Выполнение произвольного скрипта ([green1]random_script[/]):", Storage.Statisticks.ActionsCountTypeOf_random_script, Color.DodgerBlue1)
+                .AddItem("Загрузка данных из чата ([green1]remote_file[/]):", Storage.Statisticks.ActionsCountTypeOf_remote_file, Color.Green3_1);
+            chartB.Label = "[underline][bold]Список действий по категориям[/][/]\n";
+            chartB.LabelAlignment = Justify.Right;
+
+            var panelB = new Panel(chartB)
+                .Border(BoxBorder.Rounded)
+                .BorderColor(Color.PaleTurquoise1)
+                .Expand();
+
+            // 4) Футер: логи системы
+            int logHeight = Console.WindowHeight / 2;
+            var logs = UILogger.GetLogs(logHeight - 5);
             var logsTable = new Table()
                 .HideHeaders()
                 .Border(TableBorder.Minimal)
                 .BorderColor(Color.PaleTurquoise1)
                 .Expand();
-            logsTable.AddColumn(new TableColumn(string.Empty));
+            logsTable.AddColumn(string.Empty);
             foreach (var line in logs)
                 logsTable.AddRow(line);
+
             var logsPanel = new Panel(logsTable)
-                .Header("[bold]        Логи системы         [/]")
+                .Header("[bold]Логи системы[/]")
                 .Border(BoxBorder.Rounded)
                 .BorderColor(Color.PaleTurquoise1)
                 .Expand();
-            // 5) Выстраиваем Layout: шапка / тело(2 колонки) / подвал
+
+            // 5) Собираем Layout: шапка / тело (2 колонки) / футер
             var layout = new Layout("root")
                 .SplitRows(
                     new Layout("header") { Size = 3 },
-                    new Layout("body") { Ratio = Console.WindowHeight - (logHeigth + 5) },
-                    new Layout("footer") { Size = logHeigth }
+                    new Layout("body") { Ratio = 1 },
+                    new Layout("footer") { Size = logHeight }
                 );
 
+            // body → две колонки: левая меню, правая статистика
             layout["body"].SplitColumns(
                 new Layout("left") { Ratio = 1 },
                 new Layout("right") { Ratio = 3 }
             );
 
+            // правая колонка → две строки: по одной диаграмме
+            layout["right"].SplitRows(
+                new Layout("statA") { Ratio = 1 },
+                new Layout("statB") { Ratio = 1 }
+            );
 
+            // 6) Привязываем панели к Layout
             layout["header"].Update(headerPanel);
             layout["left"].Update(actionsPanel);
-            layout["right"].Update(infoPannel);
+            layout["statA"].Update(panelA);
+            layout["statB"].Update(panelB);
             layout["footer"].Update(logsPanel);
 
-            // 6) Рендерим всё сразу
+            // 7) Рендерим всё одним Write
             AnsiConsole.Write(layout);
         }
 

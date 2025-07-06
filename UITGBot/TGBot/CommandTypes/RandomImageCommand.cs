@@ -97,7 +97,6 @@ namespace UITGBot.TGBot.CommandTypes
                         }
                     }
                 }
-
                 UILogger.AddLog($"Добавлено файлов: {newFiles.Count()}, общее количество: {ListedFiles.Count}");
             }
             catch (Exception ex)

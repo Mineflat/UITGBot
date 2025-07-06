@@ -20,10 +20,6 @@ namespace UITGBot.TGBot
         public static ITelegramBotClient? botClient { get; protected set; }
         public static ReceiverOptions? receiverOptions { get; protected set; }
         public static int botErrorsLeft { get; private set; } = 5;
-        public static int botActionsCount { get; set; }
-        public static int botActiveActionsCount { get; set; }
-        public static int botMessagesReceived { get; private set; } = 0;
-        public static int botMessagesProccessed { get; private set; } = 0;
 
         public static System.Timers.Timer? _errorTimer { get; protected set; }
         public TGBotClient()
@@ -98,7 +94,8 @@ namespace UITGBot.TGBot
             string userName = string.IsNullOrEmpty(update.Message.From?.Username)
                 ? update.Message.From?.Id.ToString() ?? "Unknown"
                 : update.Message.From.Username;
-            botMessagesReceived++;
+            Storage.Statisticks.botMessagesReceived++;
+
             // Обработка текста сообщения (проверка на пустоту)
             string? msgText = update.Message.Text ?? update.Message.Caption;
             if (string.IsNullOrEmpty(msgText)) return;
@@ -129,7 +126,7 @@ namespace UITGBot.TGBot
                 try
                 {
                     UILogger.AddLog($"Выполнение команды \"{proccessResult.SelectedCommand.Name}\" пользователем {userName} ...");
-                    botMessagesProccessed++;
+                    Storage.Statisticks.botMessagesProccessed++;
                     await proccessResult.SelectedCommand.ExecuteCommand(client, update, token);
                     // Выполнение каскадной команды (независимо от результата выполнения предыдущей команды)
                     //if (proccessResult.SelectedCommand.RunAfter != null)

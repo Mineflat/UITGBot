@@ -37,5 +37,6 @@ namespace UITGBot.Core
         };
         public static List<string> LogBuffer { get; set; } = new List<string>();
         public static bool SetupOK { get; set; } = false;
+        public static StatsObject Statisticks { get; set; } = new StatsObject();
     }
 }
