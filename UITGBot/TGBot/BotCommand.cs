@@ -124,7 +124,7 @@ namespace UITGBot.TGBot
         }
         public static async Task<bool> SendMessage(string message, bool replyPrivateMessages, ITelegramBotClient client, Telegram.Bot.Types.Update update, CancellationToken token)
         {
-            UILogger.AddLog($"|     [grey100]Результат выполнения команды [/][lightgreen]{(string.IsNullOrEmpty(update.Message?.Text) ? "(пустое сообщение)" : update.Message.Text)}[/]     |");
+            UILogger.AddLog($" Результат выполнения команды {(string.IsNullOrEmpty(update.Message?.Text) ? "(пустое сообщение)" : update.Message.Text)}");
             if (message.Length > 4096)
             {
                 UILogger.AddLog($"Произошла ошибка при отправке слишком большого текста ({message.Length})!", "ERROR");

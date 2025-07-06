@@ -17,7 +17,8 @@ namespace UITGBot.Logging
         public static void AddLog(string message, string severity = "INFORMATION")
         {
             severity = severity.ToUpper();
-            string logString = $"{severity} {message.Replace("[", "[[").Replace("]", "]]")}";
+            //string logString = $"{severity} {message.Replace("[", "[[").Replace("]", "]]")}";
+            string logString = $"{severity} {message}";
             switch (severity.Trim().ToUpper())
             {
                 case "INFORMATION":
