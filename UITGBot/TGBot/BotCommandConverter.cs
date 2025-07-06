@@ -38,7 +38,8 @@ namespace UITGBot.TGBot
                 "simple" => jsonObject.ToObject<SimpleCommand>(serializer),
                 _ => throw new JsonException($"Неизвестный тип команды: {type}")
             };
-
+            TGBotClient.botActionsCount++;
+            if (command != null && command.Enabled) TGBotClient.botActiveActionsCount++;
             return command!;
         }
         public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)

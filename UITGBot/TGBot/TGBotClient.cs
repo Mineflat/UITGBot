@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -14,10 +15,16 @@ namespace UITGBot.TGBot
 {
     internal class TGBotClient
     {
+        public static string BotName { get; private set; } = string.Empty;
         public static CancellationTokenSource? cancellationToken { get; protected set; }
         public static ITelegramBotClient? botClient { get; protected set; }
         public static ReceiverOptions? receiverOptions { get; protected set; }
-        public static int botErrorsLeft { get; set; } = 5;
+        public static int botErrorsLeft { get; private set; } = 5;
+        public static int botActionsCount { get; set; }
+        public static int botActiveActionsCount { get; set; }
+        public static int botMessagesReceived { get; private set; } = 0;
+        public static int botMessagesProccessed { get; private set; } = 0;
+
         public static System.Timers.Timer? _errorTimer { get; protected set; }
         public TGBotClient()
         {
@@ -66,9 +73,11 @@ namespace UITGBot.TGBot
                 receiverOptions,
                 cancellationToken.Token
             );
-            UILogger.AddLog($"Started bot: {botClient.GetMe(cancellationToken.Token).Result.Username}");
+            BotName = botClient.GetMe(cancellationToken.Token).Result.Username ?? "[не определено]";
+            UILogger.AddLog($"Started bot: {BotName}");
             Logging.UILogger.InitUILogger();
-            Core.UIRenderer.StartUI();
+            Storage.SetupOK = true;
+            Core.UIRenderer.RestartUI();
         }
         /// <summary>
         /// Функция обработки сообщений Телеграмм-ботом
@@ -89,23 +98,21 @@ namespace UITGBot.TGBot
             string userName = string.IsNullOrEmpty(update.Message.From?.Username)
                 ? update.Message.From?.Id.ToString() ?? "Unknown"
                 : update.Message.From.Username;
-
+            botMessagesReceived++;
             // Обработка текста сообщения (проверка на пустоту)
             string? msgText = update.Message.Text ?? update.Message.Caption;
             if (string.IsNullOrEmpty(msgText)) return;
             msgText = msgText.ToLower().Trim();
+            // Логирование
+            UILogger.AddLog(
+                $"[[{(string.IsNullOrEmpty(update.Message.Chat.Title) ? $"{update.Message.Chat.Id}" : update.Message.Chat.Title)}]]" +
+                $"[[{userName}]]: " +
+                $"{msgText}", "MESSAGE");
+
             // Проверка, что это именно команда, а не какая-то дроч
             if (!msgText.StartsWith(Storage.SystemSettings.BOT_INIT_TOKEN.ToLower().Trim())) return;
             msgText = msgText.Replace(Storage.SystemSettings.BOT_INIT_TOKEN.ToLower().Trim(), "");
             msgText = msgText.Trim();
-
-            // Логирование
-            UILogger.AddLog($"[MESSAGE]" +
-                $"[{(string.IsNullOrEmpty(update.Message.Chat.Title) ? $"{update.Message.Chat.Id}" : update.Message.Chat.Title)}]" +
-                $"[{userName}]: " +
-                $"{msgText}");
-
-
             // Получаем команду и проверяем. Здесь использоавн новый удобный формат логирования
             // (при чем, двухуровневый: одибки до и после запуска команды будут отливаться)
             UpdateHandleResult proccessResult = SearchValidCommand(msgText, userID);
@@ -121,13 +128,9 @@ namespace UITGBot.TGBot
             {
                 try
                 {
-                    Console.WriteLine();
-                    Console.WriteLine(new string('-', Console.WindowWidth - 1));
                     UILogger.AddLog($"Выполнение команды \"{proccessResult.SelectedCommand.Name}\" пользователем {userName} ...");
                     await proccessResult.SelectedCommand.ExecuteCommand(client, update, token);
-                    Console.WriteLine(new string('-', Console.WindowWidth - 1));
-                    Console.WriteLine();
-
+                    botMessagesProccessed++;
                     // Выполнение каскадной команды (независимо от результата выполнения предыдущей команды)
                     //if (proccessResult.SelectedCommand.RunAfter != null)
                     //{
@@ -143,7 +146,7 @@ namespace UITGBot.TGBot
                     UILogger.AddLog($"Ошибка при выполнении команды \"{proccessResult.SelectedCommand.Name}\":\n{e.Message}", "ERROR");
                 }
             }
-            else UILogger.AddLog($"Ошибка при обработке списка коамнд: команда не была найдена, но метод SearchValidCommand не вернул HasErrors = true", "ERROR");
+            else UILogger.AddLog($"Ошибка при обработке списка команд: команда не была найдена, но метод SearchValidCommand не вернул HasErrors = true", "ERROR");
         }
         /// <summary>
         /// Функция обработки ошибок Телеграмм-бота
@@ -177,7 +180,7 @@ namespace UITGBot.TGBot
             if (selectedCommand == null)
             {
                 hasErrors = true;
-                ErrorMessage = $"Не удалось найти ни одной подходящей команды по ее основному имени\n\t\t> {userID}: \"{message}\"";
+                ErrorMessage = $"Не удалось найти ни одной подходящей команды по ее основному имени\n        > {userID}: \"{message}\"";
                 // Тут будет логика поиска команды по ее альтернативным именам (если есть)
 
             }
@@ -194,7 +197,7 @@ namespace UITGBot.TGBot
                     hasErrors = true;
                     ReplyMessage = $"Эта команда сейчас недоступна";
                     ErrorMessage = $"Найдена подходящая команда, но она отключена" +
-                        $"\t\t> {userID}: \"{selectedCommand.Name}\" != \"{message}\"";
+                        $"        > {userID}: \"{selectedCommand.Name}\" != \"{message}\"";
                     return new UpdateHandleResult(ErrorMessage, ReplyMessage, hasErrors, selectedCommand);
                 }
                 // Проверяет, что пользователь имеет права на выполнение этой команды.
@@ -205,7 +208,7 @@ namespace UITGBot.TGBot
                     hasErrors = true;
                     ReplyMessage = $"Эта команда не для тебя";
                     ErrorMessage = $"Найдена подходящая команда, но у пользователя нет прав на ее выполнение" +
-                        $"\t\t> {userID}: \"{selectedCommand.Name}\" != \"{message}\"";
+                        $"        > {userID}: \"{selectedCommand.Name}\" != \"{message}\"";
                     return new UpdateHandleResult(ErrorMessage, ReplyMessage, hasErrors, selectedCommand);
                 }
                 // Проверяем, не числится этот ID пользователя в черном списке для этой команды
@@ -214,7 +217,7 @@ namespace UITGBot.TGBot
                     hasErrors = true;
                     ReplyMessage = $"Администратор ограничил для тебя доступ к этой команде";
                     ErrorMessage = $"Найдена подходящая команда, но пользоватлелю не разрешено ее выполнить (персональный БАН)" +
-                        $"\t\t> {userID}: \"{selectedCommand.Name}\" != \"{message}\"";
+                        $"        > {userID}: \"{selectedCommand.Name}\" != \"{message}\"";
                     return new UpdateHandleResult(ErrorMessage, ReplyMessage, hasErrors, selectedCommand);
                 }
                 // Парсинг аргументов команды (существуют и разрешены ли они) 
@@ -223,10 +226,10 @@ namespace UITGBot.TGBot
                     hasErrors = true;
                     ReplyMessage = $"Эта команда не подразумевает аргументов";
                     ErrorMessage = $"Найдена подходящая команда, но ей передано слишком много аргументов\n" +
-                        $"\t\t> {userID}: \"{selectedCommand.Name}\" != \"{message}\"";
+                        $"        > {userID}: \"{selectedCommand.Name}\" != \"{message}\"";
                     return new UpdateHandleResult(ErrorMessage, ReplyMessage, hasErrors, selectedCommand);
                 }
-                ErrorMessage = $"Найдена подходящая команда\n\t\t> {userID}: \"{selectedCommand.Name}\"";
+                ErrorMessage = $"Найдена подходящая команда\n        > {userID}: \"{selectedCommand.Name}\"";
             }
             return new UpdateHandleResult(ErrorMessage, ReplyMessage, hasErrors, selectedCommand);
         }

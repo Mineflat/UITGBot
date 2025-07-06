@@ -124,13 +124,7 @@ namespace UITGBot.TGBot
         }
         public static async Task<bool> SendMessage(string message, bool replyPrivateMessages, ITelegramBotClient client, Telegram.Bot.Types.Update update, CancellationToken token)
         {
-            var text_panel = new Panel($"[wheat1]{message}[/]");
-            text_panel.Header = new PanelHeader($"|     [grey100]Результат выполнения команды [/][lightgreen]{(string.IsNullOrEmpty(update.Message?.Text) ? "(пустое сообщение)" : update.Message.Text)}[/]     |");
-            text_panel.Padding = new Padding(2, 0);
-            //text_panel.PadRight(Console.BufferWidth / 2);
-            //text_panel.Width = Console.BufferWidth / 2;
-            text_panel.BorderColor(color: Spectre.Console.Color.LightGreen);
-            AnsiConsole.Write(text_panel);
+            UILogger.AddLog($"|     [grey100]Результат выполнения команды [/][lightgreen]{(string.IsNullOrEmpty(update.Message?.Text) ? "(пустое сообщение)" : update.Message.Text)}[/]     |");
             if (message.Length > 4096)
             {
                 UILogger.AddLog($"Произошла ошибка при отправке слишком большого текста ({message.Length})!", "ERROR");

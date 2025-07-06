@@ -53,7 +53,7 @@ namespace UITGBot.Core
             }
 
             // Запуск административного интерфейса
-            //UIRenderer.StartUI();
+            //UIRenderer.RestartUI();
             return Task.FromResult((true, "Система успешно инициализирована"));
         }
         #region Функции инициализации приложения

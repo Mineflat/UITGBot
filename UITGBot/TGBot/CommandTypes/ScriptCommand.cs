@@ -102,15 +102,7 @@ namespace UITGBot.TGBot.CommandTypes
                 // Ограничение в 4096 символов
                 if (result.Length > 4096)
                     result = result.Substring(0, 4090) + "...";
-
-                var text_panel = new Panel($"[wheat1]{result}[/]");
-                text_panel.Header = new PanelHeader($"|     [grey100]Результат выполнения скрипта [/][lightgreen]{(string.IsNullOrEmpty(update.Message?.Text) ? "(пустое сообщение)" : update.Message.Text)}[/]     |");
-                text_panel.Padding = new Padding(2, 0);
-                //text_panel.PadRight(Console.BufferWidth / 2);
-                //text_panel.Width = Console.BufferWidth / 2;
-                text_panel.BorderColor(color: Spectre.Console.Color.DarkSlateGray1);
-                AnsiConsole.Write(text_panel);
-
+                UILogger.AddLog($"Результат выполнения скрипта {(string.IsNullOrEmpty(update.Message?.Text) ? "(пустое сообщение)" : update.Message.Text)}");
                 // Отправка результата в чат
                 if (SendTextOutputToChat)
                 {

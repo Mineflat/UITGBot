@@ -1,22 +1,22 @@
 ﻿using Spectre.Console;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Timers;
+using UITGBot.TGBot;
+using Spectre.Console.Rendering;
+using UITGBot.Logging;
+using Telegram.Bots.Http;
 
 namespace UITGBot.Core
 {
     internal static class UIRenderer
     {
         private static System.Timers.Timer? _RenderTimer;
-        private static List<string> pageTitles = new List<string>(){
-                    "хуй",
-                    "хуй 2",
-                    "Залупа",
-                    "Я хз че написать",
-                };
+        private static int _selectedIndex = 0;
+
+        //private static List<string> pageTitles = new List<string>(){
+        //            "хуй",
+        //            "хуй 2",
+        //            "Залупа",
+        //            "Я хз че написать",
+        //        };
         private static CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
         private static ushort _pageSelectedIndex = 0;
         //private static ushort _optionSelectedIndex = 0;
@@ -24,13 +24,15 @@ namespace UITGBot.Core
         /// Эта функция инициализирует условно-бесконечный цикл рендера административного интерфейса в отдельном потоке
         /// </summary>
         /// <returns>Успешность операции</returns>
-        public static void StartUI()
+        public static void RestartUI()
         {
+            UpdateMainMenu();
             _RenderTimer = new System.Timers.Timer(5000);
             _RenderTimer.Elapsed += (s, e) => Task.Run(RenderScreen);
             _RenderTimer.AutoReset = true;
             _RenderTimer.Start();
-            ListenForKeyPress(_cancellationTokenSource.Token);
+            while(true) Console.ReadKey(true);
+            //ListenForKeyPress(_cancellationTokenSource.Token);
         }
         /// <summary>
         /// Функция перезапуска таймера. Срабатывает каждый раз, когда пользователь нажимает на кнопку
@@ -43,30 +45,33 @@ namespace UITGBot.Core
                 _RenderTimer.Start();
             }
         }
+
+        private static Table CurrentTable = new Table();
         private static void RenderScreen()
         {
-            Console.Clear();
-            var table = new Table().Border(TableBorder.Rounded);
-            table.AddColumn("[bold]Опции[/]").Centered();
-            table.AddRow("Скрыть логи");
-            table.AddRow("Скрыть очередь скриптов");
-            table.AddRow("Скрыть статистику");
-            table.AddRow("Видимость");
-            table.AddRow("Частота обновления экрана (сек)");
-            table.AddRow("Справка");
-            table.AddRow("Перезапуск бота");
-            table.AddRow("Изменить настройки сервера");
-            table.AddRow("Misc");
-            table.AddRow("[bold]Выход[/]");
+            UpdateMainMenu();
+            //AnsiConsole.Write(CurrentTable);
+            //Console.Clear();
+            //var table = new Table().Border(TableBorder.Rounded);
+            //table.AddColumn("[bold]Опции[/]").Centered();
+            //table.AddRow("Управление списком действий");
+            //table.AddRow("Скрыть очередь скриптов");
+            //table.AddRow("Скрыть статистику");
+            //table.AddRow("Видимость");
+            //table.AddRow("Частота обновления экрана (сек)");
+            //table.AddRow("Справка");
+            //table.AddRow("Перезапуск бота");
+            //table.AddRow("Изменить настройки сервера");
+            //table.AddRow("Misc");
+            //table.AddRow("[bold]Выход[/]");
 
-            var grid = new Grid();
-            grid.AddColumn();
-            grid.AddColumn();
-
-            grid.AddRow(table, CreateSystemInfoPanel());
-            grid.AddRow(CreateCreditsPanel(), new Panel("[bold]Вкладки[/]").Border(BoxBorder.Rounded));
-
-            AnsiConsole.Write(grid);
+            //var grid = new Grid();
+            //grid.AddColumn();
+            //grid.AddColumn();
+            //grid.AddRow(table, CreateSystemInfoPanel());
+            //grid.AddRow(CreateCreditsPanel(), new Panel("[bold]Вкладки[/]").Border(BoxBorder.Rounded));
+            //grid.Expand = true;
+            //AnsiConsole.Write(grid);
             /*try
             //{
                 
@@ -137,61 +142,143 @@ namespace UITGBot.Core
             //    throw;
             */
         }
-        private static Panel CreateSystemInfoPanel()
-        {
-            var systemGrid = new Grid();
-            systemGrid.AddColumn();
-            systemGrid.AddColumn();
-            systemGrid.AddRow(new Panel("[italic]Логи системы[/]").Border(BoxBorder.Rounded),
-                              new Panel("[italic]Запущенные скрипты[/]").Border(BoxBorder.Rounded));
-            systemGrid.AddRow(new Panel("[italic]Статистика[/]").Border(BoxBorder.Rounded));
 
-            return new Panel(systemGrid).Header("[bold]Информация о системе[/]");
-        }
-        private static Panel CreateCreditsPanel()
+        public static void UpdateMainMenu()
         {
-            return new Panel("[italic]Тут credits и доп. инфа[/]").Border(BoxBorder.Rounded);
+            Console.Clear();
+            Console.CursorVisible = false;
+            // 1) Заголовок на всю ширину
+            var headerPanel = new Panel($"[bold]Панель управления ботом[/] [green1]@{TGBotClient.BotName}[/]")
+                .Border(BoxBorder.Rounded)
+                .BorderColor(Color.LightSkyBlue1)
+                .Expand();
+            // 2) Левая колонка: меню действий
+            var actionsTable = new Table()
+                .HideHeaders()
+                .Border(TableBorder.Minimal)
+                .BorderColor(Color.PaleTurquoise1)
+                .Expand();
+            actionsTable.AddColumn(new TableColumn(string.Empty));
+            actionsTable.AddRow("Управление списком действий");
+            actionsTable.AddRow("Перезапуск бота");
+            actionsTable.AddRow("Остановка бота и выход");
+            var actionsPanel = new Panel(actionsTable)
+                .Header("[bold]        Меню действий    [/]")
+                .Border(BoxBorder.Rounded)
+                .BorderColor(Color.PaleTurquoise1)
+                .Expand();
+            // 3) Правая колонка: информация
+
+            var a = new BarChart()
+                .CenterLabel()
+                .AddItem("Счетчик ошибок:", TGBotClient.botErrorsLeft, Color.Red1)
+                .AddItem("Получено сообщений:", TGBotClient.botMessagesReceived, Color.DodgerBlue2)
+                .AddItem("Из них было команд:", TGBotClient.botMessagesProccessed, Color.DeepSkyBlue1)
+                .AddItem("Активныхз команд:", TGBotClient.botActiveActionsCount, Color.Green3)
+                .AddItem("Всего команд:", TGBotClient.botActionsCount, Color.LightSkyBlue3_1)
+                .CenterLabel();
+            a.Label = "[bold]Информация[/]";
+            
+            var infoPannel = new Panel(a)
+                .BorderColor(Color.PaleTurquoise1)
+                .Border(BoxBorder.Rounded);
+            infoPannel.Expand();
+
+            // 4) Подвал: системные логи
+            // Предполагаем, что UILogger.GetLogs() возвращает List<string>
+            int logHeigth = Console.WindowHeight / 2;
+            var logs = UILogger.GetLogs((int)(logHeigth - 10));
+            var logsTable = new Table()
+                .HideHeaders()
+                .Border(TableBorder.Minimal)
+                .BorderColor(Color.PaleTurquoise1)
+                .Expand();
+            logsTable.AddColumn(new TableColumn(string.Empty));
+            foreach (var line in logs)
+                logsTable.AddRow(line);
+            var logsPanel = new Panel(logsTable)
+                .Header("[bold]        Логи системы         [/]")
+                .Border(BoxBorder.Rounded)
+                .BorderColor(Color.PaleTurquoise1)
+                .Expand();
+            // 5) Выстраиваем Layout: шапка / тело(2 колонки) / подвал
+            var layout = new Layout("root")
+                .SplitRows(
+                    new Layout("header") { Size = 3 },
+                    new Layout("body") { Ratio = Console.WindowHeight - (logHeigth + 5) },
+                    new Layout("footer") { Size = logHeigth }
+                );
+
+            layout["body"].SplitColumns(
+                new Layout("left") { Ratio = 1 },
+                new Layout("right") { Ratio = 3 }
+            );
+
+
+            layout["header"].Update(headerPanel);
+            layout["left"].Update(actionsPanel);
+            layout["right"].Update(infoPannel);
+            layout["footer"].Update(logsPanel);
+
+            // 6) Рендерим всё сразу
+            AnsiConsole.Write(layout);
         }
+
+        //private static Panel CreateSystemInfoPanel()
+        //{
+        //    var systemGrid = new Grid();
+        //    systemGrid.AddColumn();
+        //    systemGrid.AddColumn();
+        //    systemGrid.AddRow(new Panel("[italic]Логи системы[/]").Border(BoxBorder.Rounded),
+        //                      new Panel("[italic]Запущенные скрипты[/]").Border(BoxBorder.Rounded));
+        //    systemGrid.AddRow(new Panel("[italic]Статистика[/]").Border(BoxBorder.Rounded));
+
+        //    return new Panel(systemGrid).Header("[bold]Информация о системе[/]");
+        //}
+        //private static Panel CreateCreditsPanel()
+        //{
+        //    return new Panel("[italic]Тут credits и доп. инфа[/]").Border(BoxBorder.Rounded);
+        //}
         /// <summary>
         /// Функция ожидания ввода с клавиатуры (без обработчика, в отдельном потоке)
         /// </summary>
         /// <param name="token">Токен для контроля выполнения функции. Когда токен будет отменен, функция завершится</param>
-        private static void ListenForKeyPress(CancellationToken token)
-        {
-            while (!token.IsCancellationRequested)
-            {
-                if (Console.KeyAvailable)
-                {
-                    var key = Console.ReadKey(true); // Считывание нажатой кнопки, без вывода значения в консоль
-                    OnKeyPress(key.Key);
-                }
-                Thread.Sleep(50); // небольшая задержка, чтобы снизить нагрузку и рендер успевал проходить (CMD и PS сосут, оно не успевает)
-            }
-        }
+        //private static void ListenForKeyPress(CancellationToken token)
+        //{
+        //    while (!token.IsCancellationRequested)
+        //    {
+        //        if (Console.KeyAvailable)
+        //        {
+        //            var key = Console.ReadKey(true); // Считывание нажатой кнопки, без вывода значения в консоль
+        //            OnKeyPress(key.Key);
+        //        }
+        //        Thread.Sleep(50); // небольшая задержка, чтобы снизить нагрузку и рендер успевал проходить (CMD и PS сосут, оно не успевает)
+        //    }
+        //}
         /// <summary>
         /// Обработчик нажатия клавиш (блок управления панелью администратора)
         /// </summary>
         /// <param name="key"></param>
-        private static void OnKeyPress(ConsoleKey key)
-        {
-            RestartTimer();
-            switch (key)
-            {
-                case ConsoleKey.Escape:
-                    Program.OnPanic();
-                    break;
-                case ConsoleKey.LeftArrow:
-                case ConsoleKey.A:
-                    if (_pageSelectedIndex - 1 >= 0) _pageSelectedIndex--;
-                    else _pageSelectedIndex = (ushort)(pageTitles.Count - 1);
-                    break;
-                case ConsoleKey.RightArrow:
-                case ConsoleKey.D:
-                    if (_pageSelectedIndex + 1 < pageTitles.Count) _pageSelectedIndex++;
-                    else _pageSelectedIndex = 0;
-                    break;
-            }
-            RenderScreen();
-        }
+        //private static void OnKeyPress(ConsoleKey key)
+        //{
+        //    RestartTimer();
+        //    switch (key)
+        //    {
+        //        case ConsoleKey.Escape:
+        //            Program.OnPanic();
+        //            break;
+        //        case ConsoleKey.LeftArrow:
+        //        case ConsoleKey.A:
+        //            if (_pageSelectedIndex - 1 >= 0) _pageSelectedIndex--;
+        //            else _pageSelectedIndex = (ushort)(pageTitles.Count - 1);
+        //            break;
+        //        case ConsoleKey.RightArrow:
+        //        case ConsoleKey.D:
+        //            if (_pageSelectedIndex + 1 < pageTitles.Count) _pageSelectedIndex++;
+        //            else _pageSelectedIndex = 0;
+        //            break;
+        //    }
+        //    RenderScreen();
+        //}
     }
 }

@@ -36,6 +36,6 @@ namespace UITGBot.Core
             "кто в ролях?" // Покажет, кто у какой команде имеет доступ
         };
         public static List<string> LogBuffer { get; set; } = new List<string>();
-
+        public static bool SetupOK { get; set; } = false;
     }
 }
