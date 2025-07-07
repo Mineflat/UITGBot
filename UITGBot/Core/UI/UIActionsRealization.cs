@@ -102,15 +102,15 @@ namespace UITGBot.Core.UI
                             .PageSize(10)
                             .MoreChoicesText("[grey](Стрелка вверх и вниз меняет тип действия)[/]")
                             .AddChoices(new[] {
-                                "Фиксированный ответ (simple)", 
-                                "Полный текст из файла (full_text)", 
+                                "Фиксированный ответ (simple)",
+                                "Полный текст из файла (full_text)",
                                 "Отправка [bold]файла[/] по комане (file)",
                                 "Отправка [bold]изображения[/] по комане (image)",
                                 "Выполнение скрипта (script)",
                                 "Отправка произвольного [bold]текста[/] из JSON-файла (random_text)",
                                 "Отправка произвольного [bold]файла[/] (random_file)",
-                                "Отправка произвольного [bold]изображения[/] (random_image)", 
-                                "Выполнение произвольного [bold]скрипта[/] из директории (random_script)", 
+                                "Отправка произвольного [bold]изображения[/] (random_image)",
+                                "Выполнение произвольного [bold]скрипта[/] из директории (random_script)",
                                 "Позволить пользователю загружать файлы в директорию (remote_file)"
                             }));
                         // Осторожно! Switch-case 1 к 1!
@@ -120,34 +120,34 @@ namespace UITGBot.Core.UI
                             switch (selectedCommandType)
                             {
                                 case "Фиксированный ответ (simple)":
-                                    targetCommandJSON = JsonConvert.SerializeObject(new SimpleCommand() { Message = string.Empty }, Formatting.Indented);
+                                    targetCommandJSON = JsonConvert.SerializeObject(new SimpleCommand() { Message = string.Empty, CommandType = "simple" }, Formatting.Indented);
                                     break;
                                 case "Полный текст из файла (full_text)":
-                                    targetCommandJSON = JsonConvert.SerializeObject(new TextCommand() { FilePath = string.Empty }, Formatting.Indented);
+                                    targetCommandJSON = JsonConvert.SerializeObject(new TextCommand() { FilePath = string.Empty, CommandType = "full_text" }, Formatting.Indented);
                                     break;
                                 case "Отправка [bold]файла[/] по комане (file)":
-                                    targetCommandJSON = JsonConvert.SerializeObject(new FileCommand() { FilePath = string.Empty }, Formatting.Indented);
+                                    targetCommandJSON = JsonConvert.SerializeObject(new FileCommand() { FilePath = string.Empty, CommandType = "file" }, Formatting.Indented);
                                     break;
                                 case "Отправка [bold]изображения[/] по комане (image)":
-                                    targetCommandJSON = JsonConvert.SerializeObject(new ImageCommand() { FilePath = string.Empty }, Formatting.Indented);
+                                    targetCommandJSON = JsonConvert.SerializeObject(new ImageCommand() { FilePath = string.Empty, CommandType = "image" }, Formatting.Indented);
                                     break;
                                 case "Выполнение скрипта (script)":
-                                    targetCommandJSON = JsonConvert.SerializeObject(new ScriptCommand() { FilePath = string.Empty }, Formatting.Indented);
+                                    targetCommandJSON = JsonConvert.SerializeObject(new ScriptCommand() { FilePath = string.Empty, CommandType = "script" }, Formatting.Indented);
                                     break;
                                 case "Отправка произвольного [bold]текста[/] из JSON-файла (random_text)":
-                                    targetCommandJSON = JsonConvert.SerializeObject(new RandomTextCommand() { FilePath = string.Empty }, Formatting.Indented);
+                                    targetCommandJSON = JsonConvert.SerializeObject(new RandomTextCommand() { FilePath = string.Empty, CommandType = "random_text" }, Formatting.Indented);
                                     break;
                                 case "Отправка произвольного [bold]файла[/] (random_file)":
-                                    targetCommandJSON = JsonConvert.SerializeObject(new RandomFileCommand() { DirPath = string.Empty }, Formatting.Indented);
+                                    targetCommandJSON = JsonConvert.SerializeObject(new RandomFileCommand() { DirPath = string.Empty, CommandType = "random_file" }, Formatting.Indented);
                                     break;
                                 case "Отправка произвольного [bold]изображения[/] (random_image)":
-                                    targetCommandJSON = JsonConvert.SerializeObject(new RandomImageCommand() { DirPath = string.Empty }, Formatting.Indented);
+                                    targetCommandJSON = JsonConvert.SerializeObject(new RandomImageCommand() { DirPath = string.Empty, CommandType = "random_image" }, Formatting.Indented);
                                     break;
                                 case "Выполнение произвольного [bold]скрипта[/] из директории (random_script)":
-                                    targetCommandJSON = JsonConvert.SerializeObject(new RandomScriptCommand() { FilePath = string.Empty, ScriptDirectory = string.Empty }, Formatting.Indented);
+                                    targetCommandJSON = JsonConvert.SerializeObject(new RandomScriptCommand() { FilePath = string.Empty, ScriptDirectory = string.Empty, CommandType = "random_script" }, Formatting.Indented);
                                     break;
                                 case "Позволить пользователю загружать файлы в директорию (remote_file)":
-                                    targetCommandJSON = JsonConvert.SerializeObject(new RemoteFileCommand() { DirPath = string.Empty }, Formatting.Indented);
+                                    targetCommandJSON = JsonConvert.SerializeObject(new RemoteFileCommand() { DirPath = string.Empty, CommandType = "remote_file" }, Formatting.Indented);
                                     break;
                             }
                             if (string.IsNullOrEmpty(targetCommandJSON))
@@ -157,6 +157,7 @@ namespace UITGBot.Core.UI
                             }
 
                             editedText = TerminalEditor.Edit(targetCommandJSON);
+                            BotCommand? newCommand = new BotCommand();
                             if (string.IsNullOrEmpty(editedText)) break;
                             try
                             {
@@ -165,7 +166,7 @@ namespace UITGBot.Core.UI
                                     Converters = { new BotCommandConverter() },
                                     Formatting = Formatting.Indented
                                 };
-                                BotCommand? newCommand = JsonConvert.DeserializeObject<BotCommand>(editedText, settings);
+                                newCommand = JsonConvert.DeserializeObject<BotCommand>(editedText, settings);
                                 if (newCommand != null)
                                 {
                                     if (!newCommand.Verify())
@@ -181,7 +182,7 @@ namespace UITGBot.Core.UI
                             }
                             catch (Exception e)
                             {
-                                UILogger.AddLog($"Не удалось применить изменения для команды \"{Storage.BotCommands[editSelectedCommand].Name}\": {e.Message}", "ERROR");
+                                UILogger.AddLog($"Не удалось применить изменения для команды \"{newCommand?.Name}\": {e.Message}", "ERROR");
                             }
                         }
                         catch (Exception e)
