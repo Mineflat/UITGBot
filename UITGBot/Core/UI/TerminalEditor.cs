@@ -1,66 +1,48 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using NStack;
+using System.Diagnostics;
 using Terminal.Gui;
 
 namespace UITGBot.Core.UI
 {
     internal static class TerminalEditor
     {
-        public static string? Edit(string currentText)
+        /// <summary>
+        /// Открывает внешний редактор (из переменной $EDITOR или nano по-умолчанию),
+        /// даёт пользователю отредактировать текст и возвращает финальный результат.
+        /// </summary>
+        public static string Edit(string currentText)
         {
-            // 1. Инициализация
-            Application.Init();
+            // 1. Создаём временный файл
+            var tmpFile = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName() + Guid.NewGuid() + ".txt");
+            File.WriteAllText(tmpFile, currentText ?? "");
 
-            Colors.Base.Normal = Terminal.Gui.Attribute.Make(Color.Cyan, Color.Black);
-            Colors.Base.Focus = Terminal.Gui.Attribute.Make(Color.Cyan, Color.Black);
-            Colors.Base.HotNormal = Terminal.Gui.Attribute.Make(Color.Cyan, Color.Black);
-            Colors.Base.HotFocus = Terminal.Gui.Attribute.Make(Color.BrightYellow, Color.Black);
-            Colors.Base.Disabled = Terminal.Gui.Attribute.Make(Color.DarkGray, Color.Black);
-
-            // 2. Получаем корневой контейнер
-            var top = Application.Top;
-
-            // 3. Делаем меню (Ctrl+Q)
-            var menu = new MenuBar(new MenuBarItem[] {
-                new MenuBarItem("_File", new MenuItem[] {
-                    new MenuItem("_Quit", "", () => Application.RequestStop(), null, null, Key.Esc),
-                })
-            });
-            top.Add(menu);
-
-            // 4. Создаём окно и обязательно задаём размер
-            var win = new Window("Редактор (Ctrl+Q для выхода)")
+            try
             {
-                X = 0,
-                Y = 1,              // под меню
-                Width = Dim.Fill(),
-                Height = Dim.Fill(),
-            };
-            top.Add(win);
+                // 2. Определяем, какой редактор запускать
+                //    Пользователь мог задать $EDITOR, иначе будем использовать nano
+                var editor = Environment.GetEnvironmentVariable("EDITOR")
+                             ?? "nano";
 
-            // 5. Текстовый редактор
-            var tv = new TextView()
+                // 3. Запускаем процесс и ждём его выхода
+                var psi = new ProcessStartInfo
+                {
+                    FileName = editor,
+                    Arguments = tmpFile,
+                    RedirectStandardInput = false,
+                    RedirectStandardOutput = false,
+                    UseShellExecute = true,   // чтобы подхватить терминал
+                };
+                using var proc = Process.Start(psi);
+                proc?.WaitForExit();
+
+                // 4. Читаем результат
+                return File.ReadAllText(tmpFile);
+            }
+            finally
             {
-                X = 0,
-                Y = 0,
-                Width = Dim.Fill(),
-                Height = Dim.Fill(),
-                Text = currentText,
-                WordWrap = true
-            };
-            win.Add(tv);
-
-            // 6. Запуск цикла
-            Application.Run();
-
-            // 7. Можно корректно завершить
-            Application.Shutdown();
-
-            // 8. Возвращаем результат
-            return tv.Text.ToString();
+                // 5. Убираем временный файл
+                try { File.Delete(tmpFile); } catch { /* ignore */ }
+            }
         }
     }
 }

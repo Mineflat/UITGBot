@@ -19,7 +19,7 @@
     <PackageReference Include="Spectre.Console.Json" Version="0.50.0" />
     <PackageReference Include="Telegram.Bot" Version="22.3.0" />
     <PackageReference Include="Telegram.Bots.Extensions.Polling" Version="5.9.0" />
-    <PackageReference Include="Terminal.Gui" Version="1.19.0" />
+    <PackageReference Include="Terminal.Gui" Version="1.*" />
   </ItemGroup>
 
 </Project>
