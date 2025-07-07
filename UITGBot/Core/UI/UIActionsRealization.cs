@@ -45,18 +45,25 @@ namespace UITGBot.Core.UI
                             Converters = { new BotCommandConverter() },
                             Formatting = Formatting.Indented
                         };
-                        BotCommand? newCommand = JsonConvert.DeserializeObject<BotCommand>(editedText, settings);
-                        if (newCommand != null)
+                        try
                         {
-                            if (!newCommand.Verify())
+                            BotCommand? newCommand = JsonConvert.DeserializeObject<BotCommand>(editedText, settings);
+                            if (newCommand != null)
                             {
-                                UILogger.AddLog($"Не удалось применить изменения для команды \"{newCommand.Name}\" - команда не прошла верификацию", "WARNING");
+                                if (!newCommand.Verify())
+                                {
+                                    UILogger.AddLog($"Не удалось применить изменения для команды \"{newCommand.Name}\" - команда не прошла верификацию", "WARNING");
+                                }
+                                else
+                                {
+                                    Storage.BotCommands[editSelectedCommand] = newCommand;
+                                    UILogger.AddLog($"Команда \"{newCommand.Name}\" успешно изменена администратором");
+                                }
                             }
-                            else
-                            {
-                                Storage.BotCommands[editSelectedCommand] = newCommand;
-                                UILogger.AddLog($"Команда \"{newCommand.Name}\" успешно изменена администратором");
-                            }
+                        }
+                        catch (Exception e)
+                        {
+                            UILogger.AddLog($"Не удалось применить изменения для команды \"{Storage.BotCommands[editSelectedCommand].Name}\": {e.Message}", "ERROR");
                         }
                         break;
                     case ConsoleKey.Escape:
