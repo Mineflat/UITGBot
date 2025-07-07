@@ -66,6 +66,24 @@ namespace UITGBot.Core.UI
                             UILogger.AddLog($"Не удалось применить изменения для команды \"{Storage.BotCommands[editSelectedCommand].Name}\": {e.Message}", "ERROR");
                         }
                         break;
+                    // Сохранение изменений в файл
+                    case ConsoleKey.F2:
+                        // Добавить возможность сказать "нет" перед сохранением действий
+                        UILogger.AddLog($"Администратор хочет изменить список действий");
+                        try
+                        {
+                            string newActionList = JsonConvert.SerializeObject(Storage.BotCommands);
+                            File.WriteAllText(Storage.SystemSettings.ActionsPath, newActionList);
+                            UILogger.AddLog($"Администратор изменил список действий в файле {Storage.SystemSettings.ActionsPath}", "WARNING");
+                        }
+                        catch (Exception e)
+                        {
+                            UILogger.AddLog($"Ошибка при сохранении нового списка действий в файл:\n {e.Message}", "ERROR");
+                        }
+                        return;
+                    // Создание нового действия (по шаблону)
+                    case ConsoleKey.F5:
+                        break;
                     case ConsoleKey.Escape:
                         editSelectedCommand = 0;
                         return;
@@ -174,7 +192,7 @@ namespace UITGBot.Core.UI
             }
 
             // E) Футер
-            var footerPanel = new Panel($"[grey]Enter - редактирование; Escape - для выхода. Конфигурационный файл: {Storage.SystemSettings.ActionsPath}[/]")
+            var footerPanel = new Panel($"[grey]Enter - редактирование; Escape - для выхода; F2 - записать изменения в файл [underline][red1](ПЕРЕЗАПИШЕТ АКТУАЛЬНУЮ КОНФИГУРАЦИЮ ДЕЙСТВИЙ)[/][/]; F5 - создать новое действие. Конфигурационный файл: {Storage.SystemSettings.ActionsPath}[/]")
                 .Border(BoxBorder.Rounded)
                 .BorderColor(Spectre.Console.Color.Grey)
                 .Expand();
