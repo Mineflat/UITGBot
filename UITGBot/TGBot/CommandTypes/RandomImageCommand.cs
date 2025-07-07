@@ -114,7 +114,7 @@ namespace UITGBot.TGBot.CommandTypes
             // Перебор всех масок из массива Extentions
             foreach (var ext in extensions)
             {
-                Console.WriteLine($"Поиск файлов с маской: {ext}");
+                UILogger.AddLog($"Поиск файлов с маской: {ext}", "DEBUG");
 
                 // Используем Directory.EnumerateFiles, чтобы получить список файлов
                 foreach (var file in Directory.EnumerateFiles(path, ext, SearchOption.AllDirectories))
