@@ -241,16 +241,16 @@ namespace UITGBot.Core
             //chartB.LabelAlignment = Justify.Right;
 
             var chartB = new BreakdownChart()
-                .AddItem("Простая текстовая команда ([green1]simple[/]):", Storage.Statisticks.ActionsCountTypeOf_simple, Color.DodgerBlue1)
-                .AddItem("Текст из файла по указанному пути ([green1]full_text[/]):", Storage.Statisticks.ActionsCountTypeOf_full_text, Color.Green3_1)
-                .AddItem("Произвольный текст из файла ([green1]random_text[/]):", Storage.Statisticks.ActionsCountTypeOf_random_text, Color.RoyalBlue1)
-                .AddItem("Отправка изображения ([green1]image[/]):", Storage.Statisticks.ActionsCountTypeOf_image, Color.BlueViolet)
-                .AddItem("Отправка произвольного изображения ([green1]random_image[/]):", Storage.Statisticks.ActionsCountTypeOf_random_image, Color.SteelBlue1)
-                .AddItem("Отправка файла ([green1]file[/]):", Storage.Statisticks.ActionsCountTypeOf_file, Color.HotPink)
-                .AddItem("Отправка произвольного файла ([green1]random_file[/]):", Storage.Statisticks.ActionsCountTypeOf_random_file, Color.DarkOrange3)
-                .AddItem("Выполнение скрипта ([green1]script[/]):", Storage.Statisticks.ActionsCountTypeOf_script, Color.Magenta2)
-                .AddItem("Выполнение произвольного скрипта ([green1]random_script[/]):", Storage.Statisticks.ActionsCountTypeOf_random_script, Color.Plum3)
-                .AddItem("Загрузка данных из чата ([green1]remote_file[/]):", Storage.Statisticks.ActionsCountTypeOf_remote_file, Color.Khaki3);
+                .AddItem("Простая текстовая команда (simple):", Storage.Statisticks.ActionsCountTypeOf_simple, Color.DodgerBlue1)
+                .AddItem("Текст из файла по указанному пути (full_text):", Storage.Statisticks.ActionsCountTypeOf_full_text, Color.Green3_1)
+                .AddItem("Произвольный текст из файла (random_text):", Storage.Statisticks.ActionsCountTypeOf_random_text, Color.RoyalBlue1)
+                .AddItem("Отправка изображения (image):", Storage.Statisticks.ActionsCountTypeOf_image, Color.BlueViolet)
+                .AddItem("Отправка произвольного изображения (random_image):", Storage.Statisticks.ActionsCountTypeOf_random_image, Color.SteelBlue1)
+                .AddItem("Отправка файла (file):", Storage.Statisticks.ActionsCountTypeOf_file, Color.HotPink)
+                .AddItem("Отправка произвольного файла (random_file):", Storage.Statisticks.ActionsCountTypeOf_random_file, Color.DarkOrange3)
+                .AddItem("Выполнение скрипта (script):", Storage.Statisticks.ActionsCountTypeOf_script, Color.Magenta2)
+                .AddItem("Выполнение произвольного скрипта (random_script):", Storage.Statisticks.ActionsCountTypeOf_random_script, Color.Plum3)
+                .AddItem("Загрузка данных из чата (remote_file):", Storage.Statisticks.ActionsCountTypeOf_remote_file, Color.Khaki3);
 
             var panelB = new Panel(chartB)
                 .Border(BoxBorder.Rounded)
