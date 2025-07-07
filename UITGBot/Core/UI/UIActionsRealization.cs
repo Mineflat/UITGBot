@@ -64,7 +64,7 @@ namespace UITGBot.Core.UI
             // 3) Справа → две зоны: название и JSON
             layout["right"].SplitRows(
                 new Layout("actionInfo") { Size = 3 },
-                new Layout("actionSetupMenu") { Ratio = 1 },
+                new Layout("actionSetupMenu") { Ratio = 1, IsVisible = false },
                 new Layout("actionConfig") { Ratio = 1 }
             );
 
@@ -144,17 +144,9 @@ namespace UITGBot.Core.UI
             }
 
             // E) Футер
-            var footerTable = new Table()
-                .HideHeaders()
-                .Border(TableBorder.Minimal)
-                .BorderColor(Color.PaleTurquoise1)
-                .Expand();
-            footerTable.AddColumn(string.Empty);
-            footerTable.AddRow("[green]Сохранить[/]");
-            footerTable.AddRow("[red]Выход[/]");
-            var footerPanel = new Panel(footerTable)
+            var footerPanel = new Panel($"[grey]Enter - для редактирования; Escape - для выхода. Конфигурационный файл: {Storage.SystemSettings.ActionsPath}[/]")
                 .Border(BoxBorder.Rounded)
-                .BorderColor(Color.LightSkyBlue1)
+                .BorderColor(Color.Grey)
                 .Expand();
 
             // 4) Привязываем всё к Layout

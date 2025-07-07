@@ -13,6 +13,7 @@ namespace UITGBot.Core
         private static System.Timers.Timer? _RenderTimer;
         private static int _selectedIndex = 0;
         private static Layout _CurrentLayout = new Layout();
+        private static bool _canRender = true;
         private static List<UIScreenItem> _MainPageActions = new List<UIScreenItem>()
         {
             new UIScreenItem()
@@ -66,8 +67,10 @@ namespace UITGBot.Core
                     case ConsoleKey.Enter:
                         try
                         {
+                            _canRender = false;
                             UILogger.AddLog($"Выполнение действия из меню ([cyan1]{_MainPageActions[_selectedIndex].Title}[/])", "DEBUG");
                             if (_MainPageActions[_selectedIndex].ExecAfter != null) { _MainPageActions[_selectedIndex].ExecAfter?.Invoke(); }
+                            _canRender = true;
                         }
                         catch (Exception e)
                         {
@@ -191,6 +194,7 @@ namespace UITGBot.Core
 
         public static void UpdateMainMenu()
         {
+            if (!_canRender) return;
             // 1) Заголовок на всю ширину
             var headerPanel = new Panel($"[bold]Панель управления ботом[/] [green1]@{TGBotClient.BotName}[/]")
                 .Border(BoxBorder.Rounded)
