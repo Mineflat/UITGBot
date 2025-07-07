@@ -69,6 +69,15 @@ namespace UITGBot.Core.UI
                     // Сохранение изменений в файл
                     case ConsoleKey.F2:
                         // Добавить возможность сказать "нет" перед сохранением действий
+                        var confirmation = AnsiConsole.Prompt(
+                        new TextPrompt<bool>($"Сохранить изменения в файл {Storage.SystemSettings.ActionsPath}?")
+                            .AddChoice(true)
+                            .AddChoice(false)
+                            .DefaultValue(false)
+                            .WithConverter(choice => choice ? "y" : "n"));
+                        // Echo the confirmation back to the terminal
+                        Console.WriteLine(confirmation ? "Confirmed" : "Declined");
+                        if (!confirmation) break;
                         UILogger.AddLog($"Администратор хочет изменить список действий");
                         try
                         {
