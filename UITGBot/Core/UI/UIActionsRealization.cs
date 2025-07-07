@@ -9,13 +9,14 @@ using System.Threading.Tasks;
 using UITGBot.Logging;
 using UITGBot.TGBot;
 using Polly;
+using Terminal.Gui;
 
 namespace UITGBot.Core.UI
 {
     internal static class UIActionsRealization
     {
         private static Layout _OptionLayout = new Layout();
-        private static int selectedAction = 0;
+        private static int editSelectedCommand = 0;
         private static int selectedGlobal = 0;
         public static void SetupActions()
         {
@@ -26,18 +27,40 @@ namespace UITGBot.Core.UI
                 {
                     case ConsoleKey.W:
                     case ConsoleKey.UpArrow:
-                        if (selectedAction - 1 < 0) selectedAction = Storage.BotCommands.Count - 1;
-                        else selectedAction = selectedAction - 1;
+                        if (editSelectedCommand - 1 < 0) editSelectedCommand = Storage.BotCommands.Count - 1;
+                        else editSelectedCommand = editSelectedCommand - 1;
                         break;
                     case ConsoleKey.S:
                     case ConsoleKey.DownArrow:
-                        if (selectedAction + 1 >= Storage.BotCommands.Count) selectedAction = 0;
-                        else selectedAction = selectedAction + 1;
+                        if (editSelectedCommand + 1 >= Storage.BotCommands.Count) editSelectedCommand = 0;
+                        else editSelectedCommand = editSelectedCommand + 1;
                         break;
                     case ConsoleKey.Enter:
-
+                        string? editedText = TerminalEditor.Edit(JsonConvert.SerializeObject(
+                            Storage.BotCommands[editSelectedCommand],
+                            Formatting.Indented));
+                        if (string.IsNullOrEmpty(editedText)) break;
+                        var settings = new JsonSerializerSettings
+                        {
+                            Converters = { new BotCommandConverter() },
+                            Formatting = Formatting.Indented
+                        };
+                        BotCommand? newCommand = JsonConvert.DeserializeObject<BotCommand>(editedText, settings);
+                        if (newCommand != null)
+                        {
+                            if (!newCommand.Verify())
+                            {
+                                UILogger.AddLog($"Не удалось применить изменения для команды \"{newCommand.Name}\" - команда не прошла верификацию", "WARNING");
+                            }
+                            else
+                            {
+                                Storage.BotCommands[editSelectedCommand] = newCommand;
+                                UILogger.AddLog($"Команда \"{newCommand.Name}\" успешно изменена администратором");
+                            }
+                        }
                         break;
                     case ConsoleKey.Escape:
+                        editSelectedCommand = 0;
                         return;
                 }
             }
@@ -72,20 +95,20 @@ namespace UITGBot.Core.UI
             var headerPanel = new Panel(
                     $"[bold]Панель управления действиями бота[/] [green1]@{TGBotClient.BotName}[/]")
                 .Border(BoxBorder.Rounded)
-                .BorderColor(Color.LightSkyBlue1)
+                .BorderColor(Spectre.Console.Color.LightSkyBlue1)
                 .Expand();
 
             // B) Меню действий
             var actionsTable = new Table()
                 .HideHeaders()
                 .Border(TableBorder.Minimal)
-                .BorderColor(Color.PaleTurquoise1)
+                .BorderColor(Spectre.Console.Color.PaleTurquoise1)
                 .Expand();
             actionsTable.AddColumn(string.Empty);
             for (int i = 0; i < Storage.BotCommands.Count; i++)
             {
                 var cmd = Storage.BotCommands[i];
-                if (i == selectedAction)
+                if (i == editSelectedCommand)
                     actionsTable.AddRow($">> [green]{cmd.Name}[/]");
                 else
                     actionsTable.AddRow(
@@ -97,56 +120,56 @@ namespace UITGBot.Core.UI
             var actionsPanel = new Panel(actionsTable)
                 .Header("[bold]Список доступных действий[/]")
                 .Border(BoxBorder.Rounded)
-                .BorderColor(Color.PaleTurquoise1)
+                .BorderColor(Spectre.Console.Color.PaleTurquoise1)
                 .Expand();
 
             // C) Название выбранного действия
-            Panel infoPanel = (selectedAction >= 0 && selectedAction < Storage.BotCommands.Count)
-                ? new Panel($"Настройки для действия [DeepSkyBlue3_1]{Storage.BotCommands[selectedAction].Name}[/]")
+            Panel infoPanel = (editSelectedCommand >= 0 && editSelectedCommand < Storage.BotCommands.Count)
+                ? new Panel($"Настройки для действия [DeepSkyBlue3_1]{Storage.BotCommands[editSelectedCommand].Name}[/]")
                     .Border(BoxBorder.Rounded)
-                    .BorderColor(Color.Yellow)
+                    .BorderColor(Spectre.Console.Color.Yellow)
                     .Expand()
                 : new Panel("[grey]Нет выбранного действия[/]")
                     .Border(BoxBorder.Rounded)
-                    .BorderColor(Color.Yellow)
+                    .BorderColor(Spectre.Console.Color.Yellow)
                     .Expand();
 
             // D) JSON-конфиг со синтаксической подсветкой
             Panel configPanel;
-            if (selectedAction >= 0 && selectedAction < Storage.BotCommands.Count)
+            if (editSelectedCommand >= 0 && editSelectedCommand < Storage.BotCommands.Count)
             {
                 // Сериализуем в красиво отформатированный JSON
                 string rawJson = JsonConvert.SerializeObject(
-                    Storage.BotCommands[selectedAction],
+                    Storage.BotCommands[editSelectedCommand],
                     Formatting.None);
 
                 // Создаём JsonText — он сам подсветит скобки, строки, числа и т.д.
                 var jsonText = new JsonText(rawJson)
-                    .BracesColor(Color.NavajoWhite1)
-                    .BracketColor(Color.NavajoWhite3)
-                    .StringColor(Color.SeaGreen1_1)
-                    .NumberColor(Color.DeepSkyBlue3_1)
-                    .BooleanColor(Color.LightPink1)
-                    .NullColor(Color.LightSteelBlue1);
+                    .BracesColor(Spectre.Console.Color.NavajoWhite1)
+                    .BracketColor(Spectre.Console.Color.NavajoWhite3)
+                    .StringColor(Spectre.Console.Color.SeaGreen1_1)
+                    .NumberColor(Spectre.Console.Color.DeepSkyBlue3_1)
+                    .BooleanColor(Spectre.Console.Color.LightPink1)
+                    .NullColor(Spectre.Console.Color.LightSteelBlue1);
 
                 configPanel = new Panel(jsonText)
                     .Collapse()               // свернуть, если JSON слишком большой
                     .Border(BoxBorder.Rounded)
-                    .BorderColor(Color.Yellow)
+                    .BorderColor(Spectre.Console.Color.Yellow)
                     .Expand();
             }
             else
             {
                 configPanel = new Panel(string.Empty)
                     .Border(BoxBorder.Rounded)
-                    .BorderColor(Color.Yellow)
+                    .BorderColor(Spectre.Console.Color.Yellow)
                     .Expand();
             }
 
             // E) Футер
-            var footerPanel = new Panel($"[grey]Enter - для редактирования; Escape - для выхода. Конфигурационный файл: {Storage.SystemSettings.ActionsPath}[/]")
+            var footerPanel = new Panel($"[grey]Enter - редактирование; Escape - для выхода. Конфигурационный файл: {Storage.SystemSettings.ActionsPath}[/]")
                 .Border(BoxBorder.Rounded)
-                .BorderColor(Color.Grey)
+                .BorderColor(Spectre.Console.Color.Grey)
                 .Expand();
 
             // 4) Привязываем всё к Layout

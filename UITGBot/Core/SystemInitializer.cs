@@ -193,7 +193,7 @@ namespace UITGBot.Core
                     // Верификация команды
                     if (!command.Verify())
                     {
-                        //Storage.Logger?.Logger.Warning($"Не удалось верифицировать команду \"{command.Name}\" - пропускается");
+                        UILogger.AddLog($"Не удалось верифицировать команду \"{command.Name}\" - пропускается", "WARNING");
                         continue;
                     }
                     // Проверка, что команда является уникальной

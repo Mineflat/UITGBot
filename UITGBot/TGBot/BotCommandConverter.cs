@@ -16,6 +16,9 @@ namespace UITGBot.TGBot
         public override bool CanConvert(Type objectType) => objectType == typeof(BotCommand);
         public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
         {
+            if (reader.TokenType == JsonToken.Null)
+                return null;
+
             JObject jsonObject = JObject.Load(reader);
 
             if (!jsonObject.TryGetValue("CommandType", out JToken? typeToken))

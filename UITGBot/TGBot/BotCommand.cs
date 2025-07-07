@@ -84,7 +84,7 @@ namespace UITGBot.TGBot
         /// <summary>
         /// Действие, которое будет вызвано после запуска первой команды
         /// </summary>
-        public BotCommand? RunAfter { get; set; } = null;
+        public BotCommand? RunAfter { get; set; }
         /// <summary>
         /// Список ID пользователей в телеграмм, которые точно НЕ могут выполнить эту команду
         /// </summary>
