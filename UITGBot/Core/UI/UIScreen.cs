@@ -11,6 +11,5 @@ namespace UITGBot.Core.UI
     {
         public Table currentScreen {  get; set; } = new Table();
         public List<UIScreenItem> Items { get; set; } = new List<UIScreenItem>();
-
     }
 }

@@ -106,16 +106,18 @@ namespace UITGBot.TGBot
             }
             currentChat?.UpdateChatStory(update.Message); // Добавляем сообщение в пул чатов
             Storage.Statisticks.botMessagesReceived++;
+
             if (update.Message.ForwardFrom != null) return; // Чтобы бот не воспринимал пересланные сообщения как команды
             // Обработка текста сообщения (проверка на пустоту)
             string? msgText = update.Message.Text ?? update.Message.Caption;
             if (string.IsNullOrEmpty(msgText)) return;
-            msgText = msgText.ToLower().Trim();
             // Логирование
             UILogger.AddLog(
                 $"[[{(string.IsNullOrEmpty(update.Message.Chat.Title) ? $"{update.Message.Chat.Id}" : update.Message.Chat.Title)}]]" +
                 $"[[{userName}]]: " +
                 $"{msgText}", "MESSAGE");
+
+            msgText = msgText.ToLower().Trim();
 
             // Проверка, что это именно команда, а не какая-то дроч
             if (!msgText.StartsWith(Storage.SystemSettings.BOT_INIT_TOKEN.ToLower().Trim())) return;

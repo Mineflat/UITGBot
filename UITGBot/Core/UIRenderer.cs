@@ -3,6 +3,8 @@ using UITGBot.TGBot;
 using Spectre.Console.Rendering;
 using UITGBot.Logging;
 using Telegram.Bots.Http;
+using UITGBot.Core.UI;
+using Telegram.Bots.Requests;
 
 namespace UITGBot.Core
 {
@@ -10,16 +12,29 @@ namespace UITGBot.Core
     {
         private static System.Timers.Timer? _RenderTimer;
         private static int _selectedIndex = 0;
-
-        //private static List<string> pageTitles = new List<string>(){
-        //            "хуй",
-        //            "хуй 2",
-        //            "Залупа",
-        //            "Я хз че написать",
-        //        };
+        private static Layout _CurrentLayout = new Layout();
+        private static List<UIScreenItem> _MainPageActions = new List<UIScreenItem>()
+        {
+            new UIScreenItem()
+            {
+                Title = "Управление списком действий",
+            },
+            new UIScreenItem()
+            {
+                Title = "Открыть чат от имени бота",
+            },
+            new UIScreenItem()
+            {
+                Title = "Перезапуск бота",
+            },
+            new UIScreenItem()
+            {
+                Title = "Остановка бота и выход",
+                ExecAfter = () => Program.OnPanic()
+            }
+        };
         private static CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
         private static ushort _pageSelectedIndex = 0;
-        //private static ushort _optionSelectedIndex = 0;
         /// <summary>
         /// Эта функция инициализирует условно-бесконечный цикл рендера административного интерфейса в отдельном потоке
         /// </summary>
@@ -27,11 +42,32 @@ namespace UITGBot.Core
         public static void RestartUI()
         {
             UpdateMainMenu();
-            _RenderTimer = new System.Timers.Timer(5000);
-            _RenderTimer.Elapsed += (s, e) => Task.Run(RenderScreen);
-            _RenderTimer.AutoReset = true;
-            _RenderTimer.Start();
-            while(true) Console.ReadKey(true);
+            //_RenderTimer = new System.Timers.Timer(5000);
+            //_RenderTimer.Elapsed += (s, e) => Task.Run(RenderScreen);
+            //_RenderTimer.AutoReset = true;
+            //_RenderTimer.Start();
+            while (true)
+            {
+                switch (Console.ReadKey(true).Key)
+                {
+                    case ConsoleKey.W:
+                    case ConsoleKey.UpArrow:
+                        if (_selectedIndex - 1 < 0) _selectedIndex = _MainPageActions.Count - 1;
+                        else _selectedIndex = _selectedIndex - 1;
+                        break;
+                    case ConsoleKey.S:
+                    case ConsoleKey.DownArrow:
+                        if (_selectedIndex + 1 >= _MainPageActions.Count) _selectedIndex = 0;
+                        else _selectedIndex = _selectedIndex + 1;
+                        break;
+                    case ConsoleKey.Enter:
+                        UILogger.AddLog($"Нажат ключ ENTER, должно выполниться какое-то действие ([cyan]{_MainPageActions[_selectedIndex].Title}[/])", "DEBUG");
+                        break;
+                    default:
+                        break;
+                }
+                UpdateMainMenu();
+            }
             //ListenForKeyPress(_cancellationTokenSource.Token);
         }
         /// <summary>
@@ -46,7 +82,6 @@ namespace UITGBot.Core
             }
         }
 
-        private static Table CurrentTable = new Table();
         private static void RenderScreen()
         {
             UpdateMainMenu();
@@ -145,9 +180,6 @@ namespace UITGBot.Core
 
         public static void UpdateMainMenu()
         {
-            Console.Clear();
-            Console.CursorVisible = false;
-
             // 1) Заголовок на всю ширину
             var headerPanel = new Panel($"[bold]Панель управления ботом[/] [green1]@{TGBotClient.BotName}[/]")
                 .Border(BoxBorder.Rounded)
@@ -155,17 +187,19 @@ namespace UITGBot.Core
                 .Expand();
 
             // 2) Левая колонка: меню действий
+
             var actionsTable = new Table()
                 .HideHeaders()
                 .Border(TableBorder.Minimal)
                 .BorderColor(Color.PaleTurquoise1)
                 .Expand();
             actionsTable.AddColumn(string.Empty);
-            actionsTable.AddRow("Управление списком действий");
-            actionsTable.AddRow("Переписываться в чате от имени бота");
-            actionsTable.AddRow("Перезапуск бота");
-            actionsTable.AddRow("Остановка бота и выход");
-
+            for (int i = 0; i < _MainPageActions.Count; i++)
+            {
+                if (i == _selectedIndex)
+                    actionsTable.AddRow($">> [green]{_MainPageActions[i].Title}[/]");
+                else actionsTable.AddRow($"[white]{_MainPageActions[i].Title}[/]");
+            }
             var actionsPanel = new Panel(actionsTable)
                 .Header("[bold]Меню действий[/]")
                 .Border(BoxBorder.Rounded)
@@ -269,7 +303,10 @@ namespace UITGBot.Core
             layout["footer"].Update(logsPanel);
 
             // 7) Рендерим всё одним Write
-            AnsiConsole.Write(layout);
+            _CurrentLayout = layout;
+            Console.Clear();
+            Console.CursorVisible = false;
+            AnsiConsole.Write(_CurrentLayout);
         }
 
         //private static Panel CreateSystemInfoPanel()
