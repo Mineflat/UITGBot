@@ -10,6 +10,8 @@ using UITGBot.Logging;
 using UITGBot.TGBot;
 using Polly;
 using Terminal.Gui;
+using UITGBot.TGBot.CommandTypes;
+using System.Globalization;
 
 namespace UITGBot.Core.UI
 {
@@ -40,13 +42,13 @@ namespace UITGBot.Core.UI
                             Storage.BotCommands[editSelectedCommand],
                             Formatting.Indented));
                         if (string.IsNullOrEmpty(editedText)) break;
-                        var settings = new JsonSerializerSettings
-                        {
-                            Converters = { new BotCommandConverter() },
-                            Formatting = Formatting.Indented
-                        };
                         try
                         {
+                            var settings = new JsonSerializerSettings
+                            {
+                                Converters = { new BotCommandConverter() },
+                                Formatting = Formatting.Indented
+                            };
                             BotCommand? newCommand = JsonConvert.DeserializeObject<BotCommand>(editedText, settings);
                             if (newCommand != null)
                             {
@@ -92,6 +94,100 @@ namespace UITGBot.Core.UI
                         return;
                     // Создание нового действия (по шаблону)
                     case ConsoleKey.F5:
+                        Console.Clear();
+                        Console.CursorVisible = false;
+                        var selectedCommandType = AnsiConsole.Prompt(
+                        new SelectionPrompt<string>()
+                            .Title("[green]Какой тип будет у нового действия?[/]")
+                            .PageSize(10)
+                            .MoreChoicesText("[grey](Стрелка вверх и вниз меняет тип действия)[/]")
+                            .AddChoices(new[] {
+                                "Фиксированный ответ (simple)", 
+                                "Полный текст из файла (full_text)", 
+                                "Отправка [bold]файла[/] по комане (file)",
+                                "Отправка [bold]изображения[/] по комане (image)",
+                                "Выполнение скрипта (script)",
+                                "Отправка произвольного [bold]текста[/] из JSON-файла (random_text)",
+                                "Отправка произвольного [bold]файла[/] (random_file)",
+                                "Отправка произвольного [bold]изображения[/] (random_image)", 
+                                "Выполнение произвольного [bold]скрипта[/] из директории (random_script)", 
+                                "Позволить пользователю загружать файлы в директорию (remote_file)"
+                            }));
+                        // Осторожно! Switch-case 1 к 1!
+                        string targetCommandJSON = string.Empty;
+                        try
+                        {
+                            switch (selectedCommandType)
+                            {
+                                case "Фиксированный ответ (simple)":
+                                    targetCommandJSON = JsonConvert.SerializeObject(new SimpleCommand() { Message = string.Empty }, Formatting.Indented);
+                                    break;
+                                case "Полный текст из файла (full_text)":
+                                    targetCommandJSON = JsonConvert.SerializeObject(new TextCommand() { FilePath = string.Empty }, Formatting.Indented);
+                                    break;
+                                case "Отправка [bold]файла[/] по комане (file)":
+                                    targetCommandJSON = JsonConvert.SerializeObject(new FileCommand() { FilePath = string.Empty }, Formatting.Indented);
+                                    break;
+                                case "Отправка [bold]изображения[/] по комане (image)":
+                                    targetCommandJSON = JsonConvert.SerializeObject(new ImageCommand() { FilePath = string.Empty }, Formatting.Indented);
+                                    break;
+                                case "Выполнение скрипта (script)":
+                                    targetCommandJSON = JsonConvert.SerializeObject(new ScriptCommand() { FilePath = string.Empty }, Formatting.Indented);
+                                    break;
+                                case "Отправка произвольного [bold]текста[/] из JSON-файла (random_text)":
+                                    targetCommandJSON = JsonConvert.SerializeObject(new RandomTextCommand() { FilePath = string.Empty }, Formatting.Indented);
+                                    break;
+                                case "Отправка произвольного [bold]файла[/] (random_file)":
+                                    targetCommandJSON = JsonConvert.SerializeObject(new RandomFileCommand() { DirPath = string.Empty }, Formatting.Indented);
+                                    break;
+                                case "Отправка произвольного [bold]изображения[/] (random_image)":
+                                    targetCommandJSON = JsonConvert.SerializeObject(new RandomImageCommand() { DirPath = string.Empty }, Formatting.Indented);
+                                    break;
+                                case "Выполнение произвольного [bold]скрипта[/] из директории (random_script)":
+                                    targetCommandJSON = JsonConvert.SerializeObject(new RandomScriptCommand() { FilePath = string.Empty, ScriptDirectory = string.Empty }, Formatting.Indented);
+                                    break;
+                                case "Позволить пользователю загружать файлы в директорию (remote_file)":
+                                    targetCommandJSON = JsonConvert.SerializeObject(new RemoteFileCommand() { DirPath = string.Empty }, Formatting.Indented);
+                                    break;
+                            }
+                            if (string.IsNullOrEmpty(targetCommandJSON))
+                            {
+                                UILogger.AddLog("Не удалось создать новое действие: пустой выбор", "ERROR");
+                                return;
+                            }
+
+                            editedText = TerminalEditor.Edit(targetCommandJSON);
+                            if (string.IsNullOrEmpty(editedText)) break;
+                            try
+                            {
+                                var settings = new JsonSerializerSettings
+                                {
+                                    Converters = { new BotCommandConverter() },
+                                    Formatting = Formatting.Indented
+                                };
+                                BotCommand? newCommand = JsonConvert.DeserializeObject<BotCommand>(editedText, settings);
+                                if (newCommand != null)
+                                {
+                                    if (!newCommand.Verify())
+                                    {
+                                        UILogger.AddLog($"Не удалось применить изменения для [underline]новой[/] команды \"{newCommand.Name}\" - команда не прошла верификацию", "WARNING");
+                                    }
+                                    else
+                                    {
+                                        Storage.BotCommands.Add(newCommand);
+                                        UILogger.AddLog($"Успешно добавлена команда \"{newCommand.Name}\" с типом {newCommand.CommandType}");
+                                    }
+                                }
+                            }
+                            catch (Exception e)
+                            {
+                                UILogger.AddLog($"Не удалось применить изменения для команды \"{Storage.BotCommands[editSelectedCommand].Name}\": {e.Message}", "ERROR");
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            UILogger.AddLog($"Ошибка при создании нового действия: {e.Message}", "ERROR");
+                        }
                         break;
                     case ConsoleKey.Escape:
                         editSelectedCommand = 0;
