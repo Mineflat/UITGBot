@@ -10,6 +10,6 @@ namespace UITGBot.Core.UI
     {
         public delegate void Runner();
         public string Title { get; set; } = "~ ~ ~";
-        public Runner ExecAfter { get; set; }
+        public Runner? ExecAfter { get; set; }
     }
 }

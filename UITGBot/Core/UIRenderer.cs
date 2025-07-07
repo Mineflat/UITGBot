@@ -18,19 +18,22 @@ namespace UITGBot.Core
             new UIScreenItem()
             {
                 Title = "Управление списком действий",
+                ExecAfter = UIActionsRealization.SetupActions
             },
             new UIScreenItem()
             {
                 Title = "Открыть чат от имени бота",
+                ExecAfter = UIActionsRealization.OpenBotChat
             },
             new UIScreenItem()
             {
                 Title = "Перезапуск бота",
+                ExecAfter = UIActionsRealization.RestartBot
             },
             new UIScreenItem()
             {
                 Title = "Остановка бота и выход",
-                ExecAfter = () => Program.OnPanic()
+                ExecAfter = Program.OnPanic
             }
         };
         private static CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
@@ -61,7 +64,15 @@ namespace UITGBot.Core
                         else _selectedIndex = _selectedIndex + 1;
                         break;
                     case ConsoleKey.Enter:
-                        UILogger.AddLog($"Нажат ключ ENTER, должно выполниться какое-то действие ([cyan]{_MainPageActions[_selectedIndex].Title}[/])", "DEBUG");
+                        try
+                        {
+                            UILogger.AddLog($"Выполнение действия из меню ([cyan]{_MainPageActions[_selectedIndex].Title}[/])", "DEBUG");
+                            if (_MainPageActions[_selectedIndex].ExecAfter != null) { _MainPageActions[_selectedIndex].ExecAfter?.Invoke(); }
+                        }
+                        catch (Exception e)
+                        {
+                            UILogger.AddLog($"Ошибка выполнения действия из меню ([cyan]{_MainPageActions[_selectedIndex].Title}[/]):\n {e.Message}", "CRITICAL");
+                        }
                         break;
                     default:
                         break;

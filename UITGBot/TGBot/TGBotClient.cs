@@ -50,7 +50,7 @@ namespace UITGBot.TGBot
         /// <summary>
         /// Функция инициализации телеграмм-бота. Здесь происходит его запуск
         /// </summary>
-        protected void InitializeBot()
+        public void InitializeBot()
         {
             botErrorsLeft = 5;
             UILogger.AddLog("Starting Telegramm bot...");
