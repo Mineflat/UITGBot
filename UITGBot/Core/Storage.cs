@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
+using Telegram.Bot.Types.Enums;
+using UITGBot.Core.Messaging;
 using UITGBot.Logging;
 using UITGBot.TGBot;
 
@@ -38,5 +40,6 @@ namespace UITGBot.Core
         public static List<string> LogBuffer { get; set; } = new List<string>();
         public static bool SetupOK { get; set; } = false;
         public static StatsObject Statisticks { get; set; } = new StatsObject();
+        public static List<ChatActivity> CurrenetChats { get; set; } = new List<ChatActivity>();
     }
 }

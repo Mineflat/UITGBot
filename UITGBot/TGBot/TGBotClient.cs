@@ -70,7 +70,7 @@ namespace UITGBot.TGBot
                 cancellationToken.Token
             );
             BotName = botClient.GetMe(cancellationToken.Token).Result.Username ?? "[не определено]";
-            UILogger.AddLog($"Started bot: {BotName}");
+            UILogger.AddLog($"Started bot @{BotName}");
             Logging.UILogger.InitUILogger();
             Storage.SetupOK = true;
             Core.UIRenderer.RestartUI();
@@ -91,10 +91,20 @@ namespace UITGBot.TGBot
                                                    // Проверка ID пользователя и поиск юзернейма
             if (userID == null) return;
             if (update.Message == null) return;
-            
+
             string userName = string.IsNullOrEmpty(update.Message.From?.Username)
                 ? update.Message.From?.Id.ToString() ?? "Unknown"
                 : update.Message.From.Username;
+            // Добавляем неизвестный чат в список чатов
+            var currentChat = Storage.CurrenetChats
+                .FirstOrDefault(x => x.CurrentChat.Id == update.Message.Chat.Id);
+            if (currentChat == null)
+            {
+                Storage.CurrenetChats.Add(new Core.Messaging.ChatActivity(update.Message.Chat));
+                currentChat = Storage.CurrenetChats.FirstOrDefault(x => x.CurrentChat.Id == update.Message.Chat.Id); // Вопрос: а зачем? А затем, что его до этого момента не было там
+                Storage.Statisticks.botChatsKnown++;
+            }
+            currentChat?.UpdateChatStory(update.Message); // Добавляем сообщение в пул чатов
             Storage.Statisticks.botMessagesReceived++;
             if (update.Message.ForwardFrom != null) return; // Чтобы бот не воспринимал пересланные сообщения как команды
             // Обработка текста сообщения (проверка на пустоту)

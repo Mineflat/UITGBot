@@ -72,7 +72,7 @@ namespace UITGBot.TGBot.CommandTypes
             {
                 UILogger.AddLog("Список файлов еще пуст.", "WARNING");
             }
-            UILogger.AddLog("Таймер запущен.");
+            UILogger.AddLog("Таймер для мониторинга файлов запущен");
         }
 
 
@@ -97,11 +97,11 @@ namespace UITGBot.TGBot.CommandTypes
                         }
                     }
                 }
-                UILogger.AddLog($"Добавлено файлов: {newFiles.Count()}, общее количество: {ListedFiles.Count}");
+                UILogger.AddLog($"Статус обновления для команды [green1]{Name}[/]: Добавлено файлов: {newFiles.Count()}, общее количество: {ListedFiles.Count}");
             }
             catch (Exception ex)
             {
-                UILogger.AddLog($"Ошибка при обновлении списка файлов: {ex.Message}", "ERROR");
+                UILogger.AddLog($"Ошибка при обновлении списка файлов для команды [green1]{Name}[/]: {ex.Message}", "ERROR");
             }
         }
 

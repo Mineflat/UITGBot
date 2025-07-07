@@ -179,7 +179,10 @@ namespace UITGBot.Core
                 .AddItem("Получено сообщений:", Storage.Statisticks.botMessagesReceived, Color.DodgerBlue2)
                 .AddItem("Из них было команд:", Storage.Statisticks.botMessagesProccessed, Color.DeepSkyBlue1)
                 .AddItem("Активных команд:", Storage.Statisticks.botActiveActionsCount, Color.Green3)
-                .AddItem("Всего команд:", Storage.Statisticks.botActionsCount, Color.LightSkyBlue3_1);
+                .AddItem("Всего команд:", Storage.Statisticks.botActionsCount, Color.LightSkyBlue3_1)
+                .AddItem("Всего чатов с этим ботом:", Storage.Statisticks.botChatsKnown, Color.Green1)
+                .AddItem("Из них писали в чат с ботом (человек):", Storage.Statisticks.botUsersKnown, Color.DarkOliveGreen1);
+
             chartA.Label = "[underline][bold]Информация[/][/]\n";
             chartA.LabelAlignment = Justify.Right;
 
@@ -189,19 +192,31 @@ namespace UITGBot.Core
                 .Expand();
 
             // 3.2) Вторая диаграмма
-            var chartB = new BarChart()
+            //var chartB = new BarChart()
+            //    .AddItem("Простая текстовая команда ([green1]simple[/]):", Storage.Statisticks.ActionsCountTypeOf_simple, Color.DodgerBlue1)
+            //    .AddItem("Текст из файла по указанному пути ([green1]full_text[/]):", Storage.Statisticks.ActionsCountTypeOf_full_text, Color.Green3_1)
+            //    .AddItem("Произвольный текст из файла ([green1]random_text[/]):", Storage.Statisticks.ActionsCountTypeOf_random_text, Color.DodgerBlue1)
+            //    .AddItem("Отправка изображения ([green1]image[/]):", Storage.Statisticks.ActionsCountTypeOf_image, Color.Green3_1)
+            //    .AddItem("Отправка произвольного изображения ([green1]random_image[/]):", Storage.Statisticks.ActionsCountTypeOf_random_image, Color.DodgerBlue1)
+            //    .AddItem("Отправка файла ([green1]file[/]):", Storage.Statisticks.ActionsCountTypeOf_file, Color.Green3_1)
+            //    .AddItem("Отправка произвольного файла ([green1]random_file[/]):", Storage.Statisticks.ActionsCountTypeOf_random_file, Color.DodgerBlue1)
+            //    .AddItem("Выполнение скрипта ([green1]script[/]):", Storage.Statisticks.ActionsCountTypeOf_script, Color.Green3_1)
+            //    .AddItem("Выполнение произвольного скрипта ([green1]random_script[/]):", Storage.Statisticks.ActionsCountTypeOf_random_script, Color.DodgerBlue1)
+            //    .AddItem("Загрузка данных из чата ([green1]remote_file[/]):", Storage.Statisticks.ActionsCountTypeOf_remote_file, Color.Green3_1);
+            //chartB.Label = "[underline][bold]Список действий по категориям[/][/]\n";
+            //chartB.LabelAlignment = Justify.Right;
+
+            var chartB = new BreakdownChart()
                 .AddItem("Простая текстовая команда ([green1]simple[/]):", Storage.Statisticks.ActionsCountTypeOf_simple, Color.DodgerBlue1)
                 .AddItem("Текст из файла по указанному пути ([green1]full_text[/]):", Storage.Statisticks.ActionsCountTypeOf_full_text, Color.Green3_1)
-                .AddItem("Произвольный текст из файла ([green1]random_text[/]):", Storage.Statisticks.ActionsCountTypeOf_random_text, Color.DodgerBlue1)
-                .AddItem("Отправка изображения ([green1]image[/]):", Storage.Statisticks.ActionsCountTypeOf_image, Color.Green3_1)
-                .AddItem("Отправка произвольного изображения ([green1]random_image[/]):", Storage.Statisticks.ActionsCountTypeOf_random_image, Color.DodgerBlue1)
-                .AddItem("Отправка файла ([green1]file[/]):", Storage.Statisticks.ActionsCountTypeOf_file, Color.Green3_1)
-                .AddItem("Отправка произвольного файла ([green1]random_file[/]):", Storage.Statisticks.ActionsCountTypeOf_random_file, Color.DodgerBlue1)
-                .AddItem("Выполнение скрипта ([green1]script[/]):", Storage.Statisticks.ActionsCountTypeOf_script, Color.Green3_1)
-                .AddItem("Выполнение произвольного скрипта ([green1]random_script[/]):", Storage.Statisticks.ActionsCountTypeOf_random_script, Color.DodgerBlue1)
-                .AddItem("Загрузка данных из чата ([green1]remote_file[/]):", Storage.Statisticks.ActionsCountTypeOf_remote_file, Color.Green3_1);
-            chartB.Label = "[underline][bold]Список действий по категориям[/][/]\n";
-            chartB.LabelAlignment = Justify.Right;
+                .AddItem("Произвольный текст из файла ([green1]random_text[/]):", Storage.Statisticks.ActionsCountTypeOf_random_text, Color.RoyalBlue1)
+                .AddItem("Отправка изображения ([green1]image[/]):", Storage.Statisticks.ActionsCountTypeOf_image, Color.BlueViolet)
+                .AddItem("Отправка произвольного изображения ([green1]random_image[/]):", Storage.Statisticks.ActionsCountTypeOf_random_image, Color.SteelBlue1)
+                .AddItem("Отправка файла ([green1]file[/]):", Storage.Statisticks.ActionsCountTypeOf_file, Color.HotPink)
+                .AddItem("Отправка произвольного файла ([green1]random_file[/]):", Storage.Statisticks.ActionsCountTypeOf_random_file, Color.DarkOrange3)
+                .AddItem("Выполнение скрипта ([green1]script[/]):", Storage.Statisticks.ActionsCountTypeOf_script, Color.Magenta2)
+                .AddItem("Выполнение произвольного скрипта ([green1]random_script[/]):", Storage.Statisticks.ActionsCountTypeOf_random_script, Color.Plum3)
+                .AddItem("Загрузка данных из чата ([green1]remote_file[/]):", Storage.Statisticks.ActionsCountTypeOf_remote_file, Color.Khaki3);
 
             var panelB = new Panel(chartB)
                 .Border(BoxBorder.Rounded)
@@ -242,7 +257,7 @@ namespace UITGBot.Core
 
             // правая колонка → две строки: по одной диаграмме
             layout["right"].SplitRows(
-                new Layout("statA") { Size = 10 },
+                new Layout("statA") { Size = 12 },
                 new Layout("statB") { Ratio = 1 }
             );
 
