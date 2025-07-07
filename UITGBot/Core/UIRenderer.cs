@@ -66,7 +66,7 @@ namespace UITGBot.Core
                     case ConsoleKey.Enter:
                         try
                         {
-                            UILogger.AddLog($"Выполнение действия из меню ([cyan]{_MainPageActions[_selectedIndex].Title}[/])", "DEBUG");
+                            UILogger.AddLog($"Выполнение действия из меню ([cyan1]{_MainPageActions[_selectedIndex].Title}[/])", "DEBUG");
                             if (_MainPageActions[_selectedIndex].ExecAfter != null) { _MainPageActions[_selectedIndex].ExecAfter?.Invoke(); }
                         }
                         catch (Exception e)
