@@ -1,6 +1,4 @@
-﻿using NStack;
-using System.Diagnostics;
-using Terminal.Gui;
+﻿using System.Diagnostics;
 
 namespace UITGBot.Core.UI
 {

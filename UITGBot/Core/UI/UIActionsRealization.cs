@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 using UITGBot.Logging;
 using UITGBot.TGBot;
 using Polly;
-using Terminal.Gui;
 using UITGBot.TGBot.CommandTypes;
 using System.Globalization;
 
@@ -77,8 +76,6 @@ namespace UITGBot.Core.UI
                             .AddChoice(false)
                             .DefaultValue(false)
                             .WithConverter(choice => choice ? "y" : "n"));
-                        // Echo the confirmation back to the terminal
-                        Console.WriteLine(confirmation ? "Confirmed" : "Declined");
                         if (!confirmation) break;
                         UILogger.AddLog($"Администратор хочет изменить список действий");
                         try
@@ -175,8 +172,15 @@ namespace UITGBot.Core.UI
                                     }
                                     else
                                     {
-                                        Storage.BotCommands.Add(newCommand);
-                                        UILogger.AddLog($"Успешно добавлена команда \"{newCommand.Name}\" с типом {newCommand.CommandType}");
+                                        if (Storage.BotCommands.FirstOrDefault(x => x.Name.ToLower().Trim() == newCommand.Name.ToLower().Trim()) == null)
+                                        {
+                                            Storage.BotCommands.Add(newCommand);
+                                            UILogger.AddLog($"Успешно добавлена команда [green1]\"{newCommand.Name}\"[/] с типом [underline]{newCommand.CommandType}[/]");
+                                        }
+                                        else
+                                        {
+                                            UILogger.AddLog($"Невозможно добавить команду [green1]\"{newCommand.Name}\"[/] с типом [underline]{newCommand.CommandType}[/]: команда с таким именем уже существует", "ERROR");
+                                        }
                                     }
                                 }
                             }
