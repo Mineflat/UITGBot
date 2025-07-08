@@ -9,9 +9,19 @@ using UITGBot.Logging;
 
 namespace UITGBot.Core.Messaging
 {
-    internal class ChatActivity
+    public class ChatActivity
     {
+        /// <summary>
+        /// Эвент, который срабатывает каждый раз, когда в чат кто-то пишет (текстом)
+        /// </summary>
+        public event Action<Telegram.Bot.Types.Message>? MessageReceived;
+        /// <summary>
+        /// Уникальный ID чата
+        /// </summary>
         public int chatUniqID { get; set; }
+        /// <summary>
+        /// Заголовок чата, который виден в админ-панели
+        /// </summary>
         public string chatTitle { get; set; } = "no-title";
         /// <summary>
         /// Ссылка на чат в Телеграм
@@ -26,6 +36,8 @@ namespace UITGBot.Core.Messaging
         /// </summary>
         public List<Telegram.Bot.Types.Message> ChatStory { get; set; } = new List<Telegram.Bot.Types.Message>();
 
+
+
         public ChatActivity(Telegram.Bot.Types.Chat chat)
         {
             CurrentChat = chat;
@@ -39,6 +51,8 @@ namespace UITGBot.Core.Messaging
             if (ChatStory.FirstOrDefault(x => x.Id == message.Id) == null)
             {
                 ChatStory.Add(message);
+                // 3) Рассылаем всем подписчикам:
+                MessageReceived?.Invoke(message);
             }
             // Добавление информации о пользователе, от которого пришло сообщение
             if (message.From == null) return;

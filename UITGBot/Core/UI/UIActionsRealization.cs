@@ -12,6 +12,13 @@ using Polly;
 using UITGBot.TGBot.CommandTypes;
 using System.Globalization;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using Telegram.Bot;
+using Telegram.Bot.Args;
+using Telegram.Bot.Types;
+using UITGBot.Core.Messaging;
+using System.Collections.Concurrent;
+using Spectre.Console.Rendering;
+using Color = Spectre.Console.Color;    // <-- для Text, TableColumn и т.п.
 
 namespace UITGBot.Core.UI
 {
@@ -20,6 +27,7 @@ namespace UITGBot.Core.UI
         private static Layout _OptionLayout = new Layout();
         private static int editSelectedCommand = 0;
         private static int selectedGlobal = 0;
+        private static readonly ConcurrentQueue<string> _chatLog = new();
         public static void SetupActions()
         {
             while (true)
@@ -49,7 +57,7 @@ namespace UITGBot.Core.UI
                                 Converters = { new BotCommandConverter() },
                                 Formatting = Formatting.Indented
                             };
-                            BotCommand? newCommand = JsonConvert.DeserializeObject<BotCommand>(editedText, settings);
+                            TGBot.BotCommand? newCommand = JsonConvert.DeserializeObject<TGBot.BotCommand>(editedText, settings);
                             if (newCommand != null)
                             {
                                 if (!newCommand.Verify())
@@ -170,7 +178,7 @@ namespace UITGBot.Core.UI
                             }
 
                             editedText = TerminalEditor.Edit(targetCommandJSON);
-                            BotCommand? newCommand = new BotCommand();
+                            TGBot.BotCommand? newCommand = new TGBot.BotCommand();
                             if (string.IsNullOrEmpty(editedText)) break;
                             try
                             {
@@ -179,7 +187,7 @@ namespace UITGBot.Core.UI
                                     Converters = { new BotCommandConverter() },
                                     Formatting = Formatting.Indented
                                 };
-                                newCommand = JsonConvert.DeserializeObject<BotCommand>(editedText, settings);
+                                newCommand = JsonConvert.DeserializeObject<TGBot.BotCommand>(editedText, settings);
                                 if (newCommand != null)
                                 {
                                     if (!newCommand.Verify())
@@ -338,15 +346,42 @@ namespace UITGBot.Core.UI
             _OptionLayout = layout;
             AnsiConsole.Write(_OptionLayout);
         }
+        /// <summary>
+        /// Точка входа: вызывается при клике "OpenBotChat" в меню
+        /// </summary>
         public static void OpenBotChat()
         {
-            _OptionLayout = new Layout();
+            if (TGBotClient.botClient == null)
+            {
+                UILogger.AddLog("Бот не запущен", "ERROR");
+                return;
+            }
 
-            // Основная логика
+            // 1) Выбор чата из Storage.CurrenetChats
+            var choices = Storage.CurrenetChats
+                .Select(c => $"{c.chatUniqID}: {c.chatTitle}")
+                .ToArray();
+            if (!choices.Any())
+            {
+                UILogger.AddLog("Нет ни одного чата для открытия", "WARNING");
+                return;
+            }
+            var pick = AnsiConsole.Prompt(
+                new SelectionPrompt<string>()
+                    .Title("Выберите чат для открытия")
+                    .PageSize(10)
+                    .AddChoices(choices)
+            );
+            // Парсим ID из выбранной строки
+            var id = int.Parse(pick.Split(':')[0]);
+            var chatActivity = Storage.CurrenetChats
+                .First(c => c.chatUniqID == id);
 
-            Console.Clear();
-            Console.CursorVisible = false;
-            AnsiConsole.Write(_OptionLayout);
+            // 2) Запускаем наше окно чата
+            var console = new ChatConsole(chatActivity, TGBotClient.botClient);
+            console.Run();
+
+            // 3) После возвращения из Run() — вы опять в главном меню
         }
         public static void RestartBot()
         {
