@@ -318,11 +318,11 @@ namespace UITGBot.Core.UI
             }
 
             // E) Футер
-            var footerPanel = new Panel($"[grey]Enter - редактирование; Escape - для выхода; " +
-                $"F2 - записать изменения в файл [underline][red1](ПЕРЕЗАПИШЕТ АКТУАЛЬНУЮ КОНФИГУРАЦИЮ ДЕЙСТВИЙ)[/][/]; " +
-                $"F5 - создать новое действие; " +
-                $"F3 - удалить выбранное действие\n" +
-                $"Конфигурационный файл: {Storage.SystemSettings.ActionsPath}[/]")
+            var footerPanel = new Panel($"[silver]Enter[/][grey] - редактирование; Escape - для выхода;[/] " +
+                $"[silver]F2[/][grey] - записать изменения в файл [underline][red1](ПЕРЕЗАПИШЕТ АКТУАЛЬНУЮ КОНФИГУРАЦИЮ ДЕЙСТВИЙ)[/][/];[/] " +
+                $"[silver]F5[/][grey] - создать новое действие;[/] " +
+                $"[silver]F3[/][grey] - удалить выбранное действие[/]\n" +
+                $"[silver]Конфигурационный файл:[/] [grey]{Storage.SystemSettings.ActionsPath}[/]")
                 .Border(BoxBorder.Rounded)
                 .BorderColor(Spectre.Console.Color.Grey)
                 .Expand();
@@ -348,7 +348,6 @@ namespace UITGBot.Core.UI
             Console.CursorVisible = false;
             AnsiConsole.Write(_OptionLayout);
         }
-
         public static void RestartBot()
         {
             UILogger.AddLog($"Инициализирован перезапуск бота @{TGBotClient.BotName}", "WARNING");

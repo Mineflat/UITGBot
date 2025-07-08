@@ -21,6 +21,7 @@ namespace UITGBot
         /// </summary>
         public static void OnPanic()
         {
+            Console.CursorVisible = true;
             _resetEvent.Set();
             Environment.Exit(1);
         }
