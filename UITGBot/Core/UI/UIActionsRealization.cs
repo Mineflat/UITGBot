@@ -276,7 +276,7 @@ namespace UITGBot.Core.UI
 
             // C) Название выбранного действия
             Panel infoPanel = (editSelectedCommand >= 0 && editSelectedCommand < Storage.BotCommands.Count)
-                ? new Panel($"Настройки для действия [DeepSkyBlue3_1]{Storage.BotCommands[editSelectedCommand].Name}[/]")
+                ? new Panel($"Настройки для действия [green1]{Storage.BotCommands[editSelectedCommand].Name}[/]")
                     .Border(BoxBorder.Rounded)
                     .BorderColor(Spectre.Console.Color.Yellow)
                     .Expand()
