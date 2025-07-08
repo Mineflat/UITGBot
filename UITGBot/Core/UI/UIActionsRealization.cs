@@ -11,6 +11,7 @@ using UITGBot.TGBot;
 using Polly;
 using UITGBot.TGBot.CommandTypes;
 using System.Globalization;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
 namespace UITGBot.Core.UI
 {
@@ -70,13 +71,13 @@ namespace UITGBot.Core.UI
                     // Сохранение изменений в файл
                     case ConsoleKey.F2:
                         // Добавить возможность сказать "нет" перед сохранением действий
-                        var confirmation = AnsiConsole.Prompt(
+                        var saveConfirmation = AnsiConsole.Prompt(
                         new TextPrompt<bool>($"Сохранить изменения в файл {Storage.SystemSettings.ActionsPath}?")
                             .AddChoice(true)
                             .AddChoice(false)
                             .DefaultValue(false)
                             .WithConverter(choice => choice ? "y" : "n"));
-                        if (!confirmation) break;
+                        if (!saveConfirmation) break;
                         UILogger.AddLog($"Администратор хочет изменить список действий");
                         try
                         {
@@ -89,6 +90,19 @@ namespace UITGBot.Core.UI
                             UILogger.AddLog($"Ошибка при сохранении нового списка действий в файл:\n {e.Message}", "ERROR");
                         }
                         return;
+                    // Удаление выбранного действия
+                    case ConsoleKey.F3:
+                        var deletionConfirmation = AnsiConsole.Prompt(
+                            new TextPrompt<bool>($"Вы уверены, что хотите удалить действие [green1]{Storage.BotCommands[editSelectedCommand].Name}[/]?")
+                                .AddChoice(true)
+                                .AddChoice(false)
+                                .DefaultValue(false)
+                                .WithConverter(choice => choice ? "y" : "n"));
+                        if (!deletionConfirmation) break;
+                        Storage.BotCommands = Storage.BotCommands.FindAll(x => x.Name != Storage.BotCommands[editSelectedCommand].Name);
+                        UILogger.AddLog($"Администратор удалил действие [green1]{Storage.BotCommands[editSelectedCommand].Name}[/]", "WARNING");
+                        UILogger.AddLog($"Количество действий изменено: [green1]{Storage.BotCommands.Count}[/]", "DEBUG");
+                        break;
                     // Создание нового действия (по шаблону)
                     case ConsoleKey.F5:
                         Console.Clear();
@@ -99,6 +113,7 @@ namespace UITGBot.Core.UI
                             .PageSize(10)
                             .MoreChoicesText("[grey](Стрелка вверх и вниз меняет тип действия)[/]")
                             .AddChoices(new[] {
+                                "Назад",
                                 "Фиксированный ответ (simple)",
                                 "Полный текст из файла (full_text)",
                                 "Отправка [bold]файла[/] по комане (file)",
@@ -146,6 +161,7 @@ namespace UITGBot.Core.UI
                                 case "Позволить пользователю загружать файлы в директорию (remote_file)":
                                     targetCommandJSON = JsonConvert.SerializeObject(new RemoteFileCommand() { DirPath = string.Empty, CommandType = "remote_file" }, Formatting.Indented);
                                     break;
+                                case "Назад": default: return;
                             }
                             if (string.IsNullOrEmpty(targetCommandJSON))
                             {
@@ -210,7 +226,7 @@ namespace UITGBot.Core.UI
                 .SplitRows(
                     new Layout("header") { Size = 3 },
                     new Layout("body") { Ratio = 1 },
-                    new Layout("footer") { Size = 3 }
+                    new Layout("footer") { Size = 4 }
                 );
 
             // 2) Body → две колонки
@@ -302,7 +318,11 @@ namespace UITGBot.Core.UI
             }
 
             // E) Футер
-            var footerPanel = new Panel($"[grey]Enter - редактирование; Escape - для выхода; F2 - записать изменения в файл [underline][red1](ПЕРЕЗАПИШЕТ АКТУАЛЬНУЮ КОНФИГУРАЦИЮ ДЕЙСТВИЙ)[/][/]; F5 - создать новое действие. Конфигурационный файл: {Storage.SystemSettings.ActionsPath}[/]")
+            var footerPanel = new Panel($"[grey]Enter - редактирование; Escape - для выхода; " +
+                $"F2 - записать изменения в файл [underline][red1](ПЕРЕЗАПИШЕТ АКТУАЛЬНУЮ КОНФИГУРАЦИЮ ДЕЙСТВИЙ)[/][/]; " +
+                $"F5 - создать новое действие; " +
+                $"F3 - удалить выбранное действие\n" +
+                $"Конфигурационный файл: {Storage.SystemSettings.ActionsPath}[/]")
                 .Border(BoxBorder.Rounded)
                 .BorderColor(Spectre.Console.Color.Grey)
                 .Expand();
@@ -322,11 +342,13 @@ namespace UITGBot.Core.UI
         {
             _OptionLayout = new Layout();
 
+            // Основная логика
 
             Console.Clear();
             Console.CursorVisible = false;
             AnsiConsole.Write(_OptionLayout);
         }
+
         public static void RestartBot()
         {
             UILogger.AddLog($"Инициализирован перезапуск бота @{TGBotClient.BotName}", "WARNING");
