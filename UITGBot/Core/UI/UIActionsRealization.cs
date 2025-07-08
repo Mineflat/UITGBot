@@ -24,10 +24,10 @@ namespace UITGBot.Core.UI
 {
     internal static class UIActionsRealization
     {
+        #region TESTED
         private static Layout _OptionLayout = new Layout();
         private static int editSelectedCommand = 0;
         private static int selectedGlobal = 0;
-        private static readonly ConcurrentQueue<string> _chatLog = new();
         public static void SetupActions()
         {
             while (true)
@@ -346,49 +346,171 @@ namespace UITGBot.Core.UI
             _OptionLayout = layout;
             AnsiConsole.Write(_OptionLayout);
         }
-        /// <summary>
-        /// Точка входа: вызывается при клике "OpenBotChat" в меню
-        /// </summary>
-        public static void OpenBotChat()
-        {
-            if (TGBotClient.botClient == null)
-            {
-                UILogger.AddLog("Бот не запущен", "ERROR");
-                return;
-            }
 
-            // 1) Выбор чата из Storage.CurrenetChats
-            var choices = Storage.CurrenetChats
-                .Select(c => $"{c.chatUniqID}: {c.chatTitle}")
-                .ToArray();
-            if (!choices.Any())
-            {
-                UILogger.AddLog("Нет ни одного чата для открытия", "WARNING");
-                return;
-            }
-            var pick = AnsiConsole.Prompt(
-                new SelectionPrompt<string>()
-                    .Title("Выберите чат для открытия")
-                    .PageSize(10)
-                    .AddChoices(choices)
-            );
-            // Парсим ID из выбранной строки
-            var id = int.Parse(pick.Split(':')[0]);
-            var chatActivity = Storage.CurrenetChats
-                .First(c => c.chatUniqID == id);
-
-            // 2) Запускаем наше окно чата
-            var console = new ChatConsole(chatActivity, TGBotClient.botClient);
-            console.Run();
-
-            // 3) После возвращения из Run() — вы опять в главном меню
-        }
         public static void RestartBot()
         {
             UILogger.AddLog($"Инициализирован перезапуск бота @{TGBotClient.BotName}", "WARNING");
             Storage.SetupOK = false;
             Storage.botClient?.InitializeBot();
             UILogger.AddLog($"Бот @{TGBotClient.BotName} перезапущен");
+        }
+        #endregion
+        /// <summary>
+        /// Точка входа: вызывается при клике "OpenBotChat" в меню
+        /// </summary>
+
+
+        // ======== Новый код для полноэкранного чата ========
+        /// <summary>
+        /// Открывает интерфейс чата на весь экран через Spectre.Console
+        /// </summary>
+        public static void OpenBotChat()
+        {
+            var bot = TGBotClient.botClient;
+            if (bot == null)
+            {
+                UILogger.AddLog("Невозможно открыть чат: бот не запущен", "ERROR");
+                return;
+            }
+
+            var chats = Storage.CurrenetChats;
+            if (!chats.Any())
+            {
+                UILogger.AddLog("Нет чата для открытия", "WARNING");
+                return;
+            }
+
+            // Выбор чата
+            var chatChoice = AnsiConsole.Prompt(
+                new SelectionPrompt<ChatActivity>()
+                    .Title("Выберите чат для открытия или Esc для отмены")
+                    .PageSize(10)
+                    .UseConverter(c => $"{c.chatUniqID}: {c.chatTitle}")
+                    .AddChoices(chats)
+            );
+            if (chatChoice == null) return;
+
+            // Запуск чата
+            var runner = new ChatRunner(chatChoice, bot);
+            runner.Run();
+        }
+
+        /// <summary>Вспомогательный класс для полноэкранного чата</summary>
+        private class ChatRunner
+        {
+            private readonly ChatActivity _chat;
+            private readonly ITelegramBotClient _bot;
+            private readonly ConcurrentQueue<string> _log = new ConcurrentQueue<string>();
+
+            public ChatRunner(ChatActivity chatActivity, ITelegramBotClient botClient)
+            {
+                _chat = chatActivity;
+                _bot = botClient;
+                _chat.MessageReceived += OnNewMessage;
+                foreach (var m in _chat.ChatStory)
+                    OnNewMessage(m);
+            }
+
+            private void OnNewMessage(Message msg)
+            {
+                var who = msg.From?.Username ?? msg.From?.Id.ToString();
+                var time = msg.Date.ToLocalTime().ToString("HH:mm");
+                var txt = msg.Text ?? msg.Caption ?? "<media>";
+                _log.Enqueue($"[{time}] {who}: {txt}");
+            }
+
+            public void Run()
+            {
+                Console.Clear();
+                Console.CursorVisible = false;
+                bool exit = false;
+                string buffer = string.Empty;
+
+                // Инициализируем Live-презентацию с пустым target
+                AnsiConsole.Live(new Rows())
+                    .AutoClear(false)
+                    .Overflow(VerticalOverflow.Ellipsis)
+                    .Start(ctx =>
+                    {
+                        while (!exit)
+                        {
+                            // Обработка клавиш
+                            while (Console.KeyAvailable)
+                            {
+                                var key = Console.ReadKey(true);
+                                if (key.Key == ConsoleKey.Escape)
+                                {
+                                    exit = true;
+                                    break;
+                                }
+                                if (key.Key == ConsoleKey.Backspace && buffer.Length > 0)
+                                    buffer = buffer[..^1];
+                                else if (key.Key == ConsoleKey.Enter)
+                                {
+                                    var text = buffer.Trim(); buffer = string.Empty;
+                                    if (!string.IsNullOrEmpty(text))
+                                    {
+                                        try
+                                        {
+                                            var sent = _bot.SendMessage(
+                                                chatId: _chat.CurrentChat.Id,
+                                                text: text)
+                                                .GetAwaiter().GetResult();
+                                            _chat.UpdateChatStory(sent);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            UILogger.AddLog($"Ошибка отправки: {ex.Message}", "ERROR");
+                                        }
+                                    }
+                                }
+                                else if (!char.IsControl(key.KeyChar))
+                                    buffer += key.KeyChar;
+                            }
+
+                            // 1) Header
+                            var header = new Panel(new Text($"[red]X[/]  {_chat.chatTitle}"))
+                                .Border(BoxBorder.None)
+                                .Expand();
+
+                            // 2) Chat
+                            var table = new Table().Expand();
+                            table.AddColumn(new TableColumn(""));
+                            table.HideHeaders();
+                            foreach (var line in _log.ToArray())
+                                table.AddRow(new Text(line));
+                            var chatPanel = new Panel(table)
+                                .Border(BoxBorder.Rounded)
+                                .BorderColor(Color.Grey)
+                                .Expand();
+
+                            // 3) Input
+                            var cursor = DateTime.Now.Millisecond < 500 ? "_" : " ";
+                            var inputPanel = new Panel(new Text($"> {buffer}{cursor}"))
+                                .Border(BoxBorder.Rounded)
+                                .BorderColor(Color.Grey)
+                                .Expand();
+
+                            // 4) Footer
+                            var footerPanel = new Panel(new Text("Enter → отправить    Esc → назад"))
+                                .Border(BoxBorder.None)
+                                .Expand();
+
+                            // Обновляем весь рендер
+                            ctx.UpdateTarget(new Rows(
+                                header,
+                                chatPanel,
+                                inputPanel,
+                                footerPanel
+                            ));
+                            Thread.Sleep(50);
+                        }
+                    });
+
+                Console.CursorVisible = true;
+                Console.Clear();
+                _chat.MessageReceived -= OnNewMessage;
+            }
         }
     }
 }
