@@ -361,6 +361,7 @@ namespace UITGBot.Core.UI
 
 
         // ======== Новый код для полноэкранного чата ========
+
         /// <summary>
         /// Открывает интерфейс чата на весь экран через Spectre.Console
         /// </summary>
@@ -383,7 +384,7 @@ namespace UITGBot.Core.UI
             // Выбор чата
             var chatChoice = AnsiConsole.Prompt(
                 new SelectionPrompt<ChatActivity>()
-                    .Title("Выберите чат для открытия или Esc для отмены")
+                    .Title("Выберите чат")
                     .PageSize(10)
                     .UseConverter(c => $"{c.chatUniqID}: {c.chatTitle}")
                     .AddChoices(chats)
@@ -396,26 +397,29 @@ namespace UITGBot.Core.UI
         }
 
         /// <summary>Вспомогательный класс для полноэкранного чата</summary>
-        private class ChatRunner
+        internal class ChatRunner
         {
             private readonly ChatActivity _chat;
             private readonly ITelegramBotClient _bot;
-            private readonly ConcurrentQueue<string> _log = new ConcurrentQueue<string>();
+            private readonly ConcurrentQueue<string> _log = new();
 
             public ChatRunner(ChatActivity chatActivity, ITelegramBotClient botClient)
             {
                 _chat = chatActivity;
                 _bot = botClient;
-                _chat.MessageReceived += OnNewMessage;
+
+                // Подписываемся на всё, что приходит (вход + наши исходящие)
+                _chat.MessageReceived += Enqueue;
+                // Разогреваем историю
                 foreach (var m in _chat.ChatStory)
-                    OnNewMessage(m);
+                    Enqueue(m);
             }
 
-            private void OnNewMessage(Message msg)
+            private void Enqueue(Message m)
             {
-                var who = msg.From?.Username ?? msg.From?.Id.ToString();
-                var time = msg.Date.ToLocalTime().ToString("HH:mm");
-                var txt = msg.Text ?? msg.Caption ?? "<media>";
+                var who = m.From?.Username ?? m.From?.Id.ToString();
+                var time = m.Date.ToLocalTime().ToString("HH:mm");
+                var txt = m.Text ?? m.Caption ?? "<media>";
                 _log.Enqueue($"[{time}] {who}: {txt}");
             }
 
@@ -423,93 +427,127 @@ namespace UITGBot.Core.UI
             {
                 Console.Clear();
                 Console.CursorVisible = false;
-                bool exit = false;
-                string buffer = string.Empty;
 
-                // Инициализируем Live-презентацию с пустым target
+                bool exit = false;
+                string inputBuf = "";
+
+                // Запускаем Live-рендер
                 AnsiConsole.Live(new Rows())
                     .AutoClear(false)
                     .Overflow(VerticalOverflow.Ellipsis)
                     .Start(ctx =>
                     {
-                        while (!exit)
+                        try
                         {
-                            // Обработка клавиш
-                            while (Console.KeyAvailable)
+                            while (!exit)
                             {
-                                var key = Console.ReadKey(true);
-                                if (key.Key == ConsoleKey.Escape)
+                                // ————— Обработаем клавиши —————
+                                while (Console.KeyAvailable)
                                 {
-                                    exit = true;
-                                    break;
-                                }
-                                if (key.Key == ConsoleKey.Backspace && buffer.Length > 0)
-                                    buffer = buffer[..^1];
-                                else if (key.Key == ConsoleKey.Enter)
-                                {
-                                    var text = buffer.Trim(); buffer = string.Empty;
-                                    if (!string.IsNullOrEmpty(text))
+                                    var key = Console.ReadKey(true);
+                                    if (key.Key == ConsoleKey.Escape)
                                     {
-                                        try
+                                        exit = true;
+                                        break;
+                                    }
+                                    if (key.Key == ConsoleKey.Backspace)
+                                    {
+                                        if (inputBuf.Length > 0)
+                                            inputBuf = inputBuf[..^1];
+                                    }
+                                    else if (key.Key == ConsoleKey.Enter)
+                                    {
+                                        var txt = inputBuf.Trim();
+                                        inputBuf = "";
+                                        if (!string.IsNullOrEmpty(txt))
                                         {
-                                            var sent = _bot.SendMessage(
+                                            var sent = _bot
+                                            .SendMessage(
                                                 chatId: _chat.CurrentChat.Id,
-                                                text: text)
-                                                .GetAwaiter().GetResult();
+                                                text: txt)
+                                            .GetAwaiter()
+                                            .GetResult();
                                             _chat.UpdateChatStory(sent);
                                         }
-                                        catch (Exception ex)
-                                        {
-                                            UILogger.AddLog($"Ошибка отправки: {ex.Message}", "ERROR");
-                                        }
+                                    }
+                                    else if (!char.IsControl(key.KeyChar))
+                                    {
+                                        inputBuf += key.KeyChar;
                                     }
                                 }
-                                else if (!char.IsControl(key.KeyChar))
-                                    buffer += key.KeyChar;
-                            }
 
-                            // 1) Header
-                            var header = new Panel(new Text($"[red]X[/]  {_chat.chatTitle}"))
+                                // ————— Размеры экранных областей —————
+                                int totalH = Console.WindowHeight - 8;
+                                const int hdrH = 1;
+                                const int inpH = 1;
+                                const int ftrH = 1;
+                                int bodyH = totalH - hdrH - inpH - ftrH;
+                                if (bodyH < 1) bodyH = 1;
+
+                                // ————— Шапка (1 строка) —————
+                                var header = new Panel(
+                                new Text($"[[X]]  {_chat.chatTitle}"))
                                 .Border(BoxBorder.None)
                                 .Expand();
 
-                            // 2) Chat
-                            var table = new Table().Expand();
-                            table.AddColumn(new TableColumn(""));
-                            table.HideHeaders();
-                            foreach (var line in _log.ToArray())
-                                table.AddRow(new Text(line));
-                            var chatPanel = new Panel(table)
+                                // ————— Тело чата (фиксированная высота) —————
+                                // Составляем ровно bodyH последних строк
+                                var msgs = _log.ToArray();
+                                var tail = msgs.Length <= bodyH
+                                ? msgs
+                                : msgs.Skip(msgs.Length - bodyH).ToArray();
+                                var padded = tail.ToList();
+                                while (padded.Count < bodyH)
+                                    padded.Insert(0, "");
+
+                                var table = new Table().Expand();
+                                table.AddColumn("");      // ОБЯЗАТЕЛЬНО 1 колонка
+                                table.HideHeaders();
+                                foreach (var line in padded)
+                                    table.AddRow(new Text($"{line}"));
+
+                                var chatPanel = new Panel(table)
                                 .Border(BoxBorder.Rounded)
                                 .BorderColor(Color.Grey)
                                 .Expand();
 
-                            // 3) Input
-                            var cursor = DateTime.Now.Millisecond < 500 ? "_" : " ";
-                            var inputPanel = new Panel(new Text($"> {buffer}{cursor}"))
+                                // ————— Поле ввода (1 строка) —————
+                                var cursor = DateTime.Now.Millisecond < 500 ? "_" : " ";
+                                var inputPanel = new Panel(
+                                new Text($"> {inputBuf}{cursor}"))
                                 .Border(BoxBorder.Rounded)
-                                .BorderColor(Color.Grey)
+                                .BorderColor(Color.DodgerBlue1)
                                 .Expand();
 
-                            // 4) Footer
-                            var footerPanel = new Panel(new Text("Enter → отправить    Esc → назад"))
+                                // ————— Футер (1 строка) —————
+                                var footer = new Panel(
+                                new Text("[grey]Enter → отправить    Esc → назад[/]"))
                                 .Border(BoxBorder.None)
                                 .Expand();
 
-                            // Обновляем весь рендер
-                            ctx.UpdateTarget(new Rows(
+                                // Обновляем весь экран за раз
+                                ctx.UpdateTarget(new Rows(
                                 header,
                                 chatPanel,
                                 inputPanel,
-                                footerPanel
+                                footer
                             ));
-                            Thread.Sleep(50);
+
+                                // Ждём, чтобы не душить CPU и не морочить глаз
+                                Thread.Sleep(100);
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            UILogger.AddLog($"Произошла ошибка при отображении экрана с чатом\n{e.Message}", "ERROR");
+                            return;
                         }
                     });
 
+                // После выхода
                 Console.CursorVisible = true;
                 Console.Clear();
-                _chat.MessageReceived -= OnNewMessage;
+                _chat.MessageReceived -= Enqueue;
             }
         }
     }

@@ -41,9 +41,12 @@ namespace UITGBot.TGBot
         private void CheckDropdown()
         {
             if (botErrorsLeft > 0 && botErrorsLeft < 5) { UILogger.AddLog("Сброшен таймер для восстановления числа доступных ошибок. Теперь их снова 5", "DEBUG"); botErrorsLeft = 5; return; }
-            UILogger.AddLog("Can't keep up! Too many errors occured in last 15 seconds", "FATAL");
-            cancellationToken?.Cancel();
-            Program.OnPanic();
+            if (botErrorsLeft <= 0)
+            {
+                UILogger.AddLog("Can't keep up! Too many errors occured in last 15 seconds", "FATAL");
+                cancellationToken?.Cancel();
+                Program.OnPanic();
+            }
         }
         #endregion
         #region Функциональное

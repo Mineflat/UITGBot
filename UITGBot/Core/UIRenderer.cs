@@ -28,6 +28,11 @@ namespace UITGBot.Core
             },
             new UIScreenItem()
             {
+                Title = "Рассылка по чатам",
+                ExecAfter = UIActionsRealization.OpenBotChat
+            },
+            new UIScreenItem()
+            {
                 Title = "Перезапуск бота",
                 ExecAfter = UIActionsRealization.RestartBot
             },
@@ -68,12 +73,21 @@ namespace UITGBot.Core
                         try
                         {
                             _canRender = false;
-                            UILogger.AddLog($"Выполнение действия из меню ([cyan1]{_MainPageActions[_selectedIndex].Title}[/])", "DEBUG");
-                            if (_MainPageActions[_selectedIndex].ExecAfter != null) { _MainPageActions[_selectedIndex].ExecAfter?.Invoke(); }
+                            try
+                            {
+                                UILogger.AddLog($"Выполнение действия из меню ([cyan1]{_MainPageActions[_selectedIndex].Title}[/])", "DEBUG");
+                                if (_MainPageActions[_selectedIndex].ExecAfter != null) { _MainPageActions[_selectedIndex].ExecAfter?.Invoke(); }
+                            }
+                            catch (Exception e)
+                            {
+                                UILogger.AddLog($"Ошибка при выполнении действия [underline][cyan1]{_MainPageActions[_selectedIndex].Title}[/][/]:\n{e.Message}", "ERROR");
+                                throw;
+                            }
                             _canRender = true;
                         }
                         catch (Exception e)
                         {
+                            Console.WriteLine(e.Message + "\n" + e.StackTrace);
                             UILogger.AddLog($"Ошибка выполнения действия из меню ([cyan]{_MainPageActions[_selectedIndex].Title}[/]):\n {e.Message}", "CRITICAL");
                         }
                         break;

@@ -18,7 +18,7 @@ namespace UITGBot.Core.Messaging
         /// <summary>
         /// Уникальный ID чата
         /// </summary>
-        public int chatUniqID { get; set; }
+        public Guid chatUniqID { get; set; }
         /// <summary>
         /// Заголовок чата, который виден в админ-панели
         /// </summary>
@@ -41,8 +41,8 @@ namespace UITGBot.Core.Messaging
         public ChatActivity(Telegram.Bot.Types.Chat chat)
         {
             CurrentChat = chat;
-            chatTitle = CurrentChat.Title ?? "(неизвестно)";
-            chatUniqID = Storage.CurrenetChats.Count;
+            chatTitle = CurrentChat.Title ?? CurrentChat.Username ?? "(неизвестно)";
+            chatUniqID = Guid.NewGuid();
             UILogger.AddLog($"Кажется, я изучил новый чат, в который я могу писать: {chat.Id} (@{chat.Username}, {chat.FirstName} {chat.LastName})", "DEBUG");
         }
         public void UpdateChatStory(Telegram.Bot.Types.Message message)
