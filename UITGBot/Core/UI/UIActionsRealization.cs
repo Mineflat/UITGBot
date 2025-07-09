@@ -432,9 +432,6 @@ namespace UITGBot.Core.UI
                 bool exit = false;
                 string inputBuf = "";
 
-                // Мы будем рендерить **только** один IRenderable — верхний Panel,
-                // внутри которого лежит Rows(header, chatPanel, inputPanel, footer).
-                // Panel автоматически растянется на весь терминал (благодаря .Expand()).
                 AnsiConsole.Live(new Panel(string.Empty).Expand())
                     .AutoClear(false)
                     .Overflow(VerticalOverflow.Ellipsis)
@@ -442,19 +439,13 @@ namespace UITGBot.Core.UI
                     {
                         while (!exit)
                         {
-                            // 1) Читаем клавиши (Enter / Esc / Backspace / ввод)
+                            // 1) ввод
                             while (Console.KeyAvailable)
                             {
                                 var key = Console.ReadKey(true);
-                                if (key.Key == ConsoleKey.Escape)
-                                {
-                                    exit = true;
-                                    break;
-                                }
+                                if (key.Key == ConsoleKey.Escape) { exit = true; break; }
                                 if (key.Key == ConsoleKey.Backspace && inputBuf.Length > 0)
-                                {
                                     inputBuf = inputBuf[..^1];
-                                }
                                 else if (key.Key == ConsoleKey.Enter)
                                 {
                                     var txt = inputBuf.Trim();
@@ -465,8 +456,7 @@ namespace UITGBot.Core.UI
                                         {
                                             var sent = _bot
                                     .SendMessage(_chat.CurrentChat.Id, txt)
-                                    .GetAwaiter()
-                                    .GetResult();
+                                    .GetAwaiter().GetResult();
                                             _chat.UpdateChatStory(sent);
                                         }
                                         catch (Exception ex)
@@ -476,96 +466,87 @@ namespace UITGBot.Core.UI
                                     }
                                 }
                                 else if (!char.IsControl(key.KeyChar))
-                                {
                                     inputBuf += key.KeyChar;
-                                }
                             }
 
-                            // 2) Собираем ваши четыре части
-                            var header = new Panel(new Text($"[CHAT]  {_chat.chatTitle}", new Style(Color.Green3_1)))
-                            .Border(BoxBorder.None)
-                            .Expand()
-                            .HeaderAlignment(Justify.Center);
+                            // 2) HEADER
+                            var header = new Panel(new Text($"[CHAT]  {_chat.chatTitle}", new Style(Color.Green1)))
+                    .Border(BoxBorder.None)
+                    .Expand();
 
-                            // таблица сообщений (упрочнено — без overflow)
-                            var table = new Table().HideHeaders()
-                                      .AddColumn(new TableColumn(string.Empty));
-                            foreach (var (time, who, txt) in _log)
+                            // 3) рассчитываем высоту панели чата
+                            int chatPanelHeight = Console.WindowHeight / 2;
+                            int innerRows = Math.Max(1, chatPanelHeight - 2);
+
+                            // 4) хвост из последних innerRows сообщений
+                            var allMsgs = _log.ToArray();
+                            var tail = allMsgs.Reverse().Take(innerRows).Reverse().ToArray();
+                            int blanks = innerRows - tail.Length;
+
+                            // 5) собираем таблицу с пустыми строками сверху
+                            var table = new Table()
+                    .HideHeaders()
+                    .AddColumn(new TableColumn(string.Empty))
+                    .Expand();
+
+                            for (int i = 0; i < blanks; i++)
+                                table.AddRow("");
+
+                            foreach (var (time, who, txt) in tail)
                             {
-                                if (who == TGBotClient.BotName)
-                                {
-                                    var lineMarkup =
-                                        $"[grey]{Markup.Escape(time)}[/] " +
-                                        $"[deepskyblue1][underline]{Markup.Escape(who)}[/][/]\n" +
-                                        $"               [white]{Markup.Escape(txt.Replace("\n", "\n               "))}[/]";
-                                    table.AddRow(new Markup(lineMarkup));
-                                }
-                                else
-                                {
-                                    var lineMarkup =
-                                        $"[grey]{Markup.Escape(time)}[/] " +
-                                        $"[green1][underline]{Markup.Escape(who)}[/][/]\n" +
-                                        $"               [white]{Markup.Escape(txt.Replace("\n", "\n               "))}[/]";
-                                    table.AddRow(new Markup(lineMarkup));
-                                }
-                            }
-                            
-                            var chatPanel = new Panel(table)
-                            .Border(BoxBorder.Rounded)
-                            .BorderColor(Color.Grey)
-                            .Expand();
-                            chatPanel.Height = Console.WindowHeight / 2;
-                            table.Expand();
+                                // выбираем цвет имени
+                                var whoColor = who == TGBotClient.BotName
+                        ? "deepskyblue1"
+                        : "green1";
 
+                                // форматируем
+                                var lineMarkup =
+                        $"[grey]{Markup.Escape(time)}[/] " +
+                        $"[{whoColor}][underline]{Markup.Escape(who)}[/][/]  " +
+                        $"[white]{Markup.Escape(txt).Replace("\n", "\n      ")}[/]";
+
+                                table.AddRow(new Markup(lineMarkup));
+                            }
+
+                            var chatPanel = new Panel(table)
+                    .Border(BoxBorder.Rounded)
+                    .BorderColor(Color.Grey)
+                    // убрали .Height(...) — Panel займёт ровно свою «контентную» высоту
+                    .Expand();
+
+                            // 6) INPUT
                             var cursor = DateTime.Now.Millisecond < 500 ? "_" : " ";
-                            var inputPanel = new Panel(new Text($"> {inputBuf}{cursor}"))
+                            var inputPanel = new Panel(new Text($"> {Markup.Escape(inputBuf)}{cursor}"))
                     .Border(BoxBorder.Rounded)
                     .BorderColor(Color.Grey)
                     .Expand();
 
+                            // 7) FOOTER
                             var footer = new Panel(new Text("Enter → отправить    Esc → назад"))
                     .Border(BoxBorder.None)
                     .Expand();
 
-                            //// 3) Оборачиваем всё в один Panel
-                            //var rootPanel = new Panel(
-                            //    new Rows(
-                            //        header,
-                            //        chatPanel,
-                            //        inputPanel,
-                            //        footer
-                            //    ))
-                            //.Border(BoxBorder.None)   // или Rounded, как вам нравится
-                            //.Expand();                // растягиваем на весь экран
+                            // 8) собираем во «внешний» Panel
+                            var root = new Panel(new Rows(
+                        header,
+                        chatPanel,
+                        inputPanel,
+                        footer
+                    ))
+                    .Border(BoxBorder.None)
+                    .Expand();
 
-                            var rootPanel = new Table()
-                            {
-                                Border = TableBorder.None,
-                                Expand = true,
-                                ShowHeaders = false
-                            };
-
-                            rootPanel.AddColumn("");
-                            rootPanel.AddRow(header);
-                            rootPanel.AddRow(chatPanel);
-                            rootPanel.AddRow(inputPanel);
-                            rootPanel.AddRow(footer);
-
-                            rootPanel.Expand();
-
-                            // 4) Обновляем именно его
-                            ctx.UpdateTarget(rootPanel);
-
+                            // 9) обновляем
+                            ctx.UpdateTarget(root);
                             Thread.Sleep(50);
                         }
                     });
 
-                // после выхода
+                // выход
                 Console.CursorVisible = true;
                 Console.Clear();
                 _chat.MessageReceived -= Enqueue;
             }
-
         }
     }
 }
