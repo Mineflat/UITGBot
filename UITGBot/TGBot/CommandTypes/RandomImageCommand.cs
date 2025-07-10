@@ -97,7 +97,7 @@ namespace UITGBot.TGBot.CommandTypes
                         }
                     }
                 }
-                UILogger.AddLog($"Статус обновления для команды [green1]{Name}[/]: Добавлено файлов: {newFiles.Count()}, общее количество: {ListedFiles.Count}");
+                UILogger.AddLog($"Статус обновления для команды [green1]{Name}[/]: Добавлено файлов: {newFiles.Count()}, общее количество: {ListedFiles.Count}", "DEBUG");
             }
             catch (Exception ex)
             {

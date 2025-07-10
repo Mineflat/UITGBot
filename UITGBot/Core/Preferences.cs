@@ -82,6 +82,10 @@ namespace UITGBot.Core
         /// </summary>
         [JsonRequired]
         public required string ErrorReplyPath { get; set; }
+        /// <summary> ***
+        /// Включает или отключает Debug-мод
+        /// </summary>
+        public bool DebugMode { get; internal set; } = false;
         #endregion
         #region
         #endregion
