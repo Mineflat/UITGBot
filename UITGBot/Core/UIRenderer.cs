@@ -319,7 +319,7 @@ namespace UITGBot.Core
                 new Layout("right") { Ratio = 3 }
             );
 
-            int t = (Console.BufferWidth / 2) - "Автор проекта: @ElijahKamsky".Length; // считаем размер разделителя
+            int t = (Console.BufferWidth / 3) - "Автор проекта: @ElijahKamsky".Length; // считаем размер разделителя
             string target = $"  [green3_1]Используемые пути, согласно конфигурационому файлу[/]" +
                         new string(' ', t) + // разделитель
                         $" [grey15]Автор проекта: @ElijahKamsky[/]{Environment.NewLine}" +
