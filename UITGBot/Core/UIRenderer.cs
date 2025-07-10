@@ -321,7 +321,18 @@ namespace UITGBot.Core
             // правая колонка → две строки: по одной диаграмме
             layout["right"].SplitRows(
                 new Layout("statA") { Size = 12 },
-                new Layout("statB") { Ratio = 1 }
+                new Layout("statB") { Ratio = 1 },
+                new Layout(
+                    new Table().AddColumn($" [green3_1]Используемые пути, согласно конфигурационому файлу[/]{Environment.NewLine}" +
+                        $" [silver]Файл действий:[/] [grey]{Storage.SystemSettings.ActionsPath}[/]{Environment.NewLine}" +
+                        $" [silver]Файл ответов (положительные):[/] [grey]{Storage.SystemSettings.SuccessReplyPath}[/]{Environment.NewLine}" +
+                        $" [silver]Файл ответов (отрицательные):[/] [grey]{Storage.SystemSettings.ErrorReplyPath}[/]{Environment.NewLine}" +
+                        $" [silver]Логи хранятся в:[/] [grey]{Storage.SystemSettings.LogDirectory}[/]{Environment.NewLine}" +
+                        $" [grey15]Автор проекта: @ElijahKamsky[/]")
+                        .Border(TableBorder.Ascii2)
+                        .BorderColor(Color.PaleTurquoise1)
+                        .Expand()
+                )
             );
 
             // 6) Привязываем панели к Layout
