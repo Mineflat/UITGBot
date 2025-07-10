@@ -5,6 +5,7 @@ using UITGBot.Logging;
 using Telegram.Bots.Http;
 using UITGBot.Core.UI;
 using Telegram.Bots.Requests;
+using Quartz.Util;
 
 namespace UITGBot.Core
 {
@@ -328,7 +329,7 @@ namespace UITGBot.Core
                         $" [silver]Файл ответов (положительные):[/] [grey]{Storage.SystemSettings.SuccessReplyPath}[/]{Environment.NewLine}" +
                         $" [silver]Файл ответов (отрицательные):[/] [grey]{Storage.SystemSettings.ErrorReplyPath}[/]{Environment.NewLine}" +
                         $" [silver]Логи хранятся в:[/] [grey]{Storage.SystemSettings.LogDirectory}[/]{Environment.NewLine}" +
-                        $" [grey15]Автор проекта: @ElijahKamsky[/]")
+                        $" [grey15]Автор проекта: @ElijahKamsky[/]{string.Format(Environment.NewLine, logHeight)}")
                         .Border(TableBorder.Ascii2)
                         .BorderColor(Color.PaleTurquoise1)
                         .Expand()
