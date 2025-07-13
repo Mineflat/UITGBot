@@ -1,12 +1,5 @@
-﻿using Microsoft.AspNetCore.Components.Forms;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Telegram.Bot;
+﻿using Telegram.Bot;
 using Telegram.Bot.Types;
-using Telegram.Bots.Types;
 using UITGBot.Core;
 using UITGBot.Logging;
 
@@ -107,7 +100,7 @@ namespace UITGBot.TGBot.CommandTypes
 
         private async Task<List<string>> GetFilesAsync(string path, string[] extensions)
         {
-            UILogger.AddLog($"Проверка директории: {path}, Маски: {string.Join(", ", extensions)}");
+            UILogger.AddLog($"Проверка директории: {path}, Маски: {string.Join(", ", extensions)}", "DEBUG");
 
             var files = new List<string>();
 
@@ -123,7 +116,6 @@ namespace UITGBot.TGBot.CommandTypes
                     files.Add(file); // Добавляем файл в список
                 }
             }
-
             return files;
         }
         /// <summary>
