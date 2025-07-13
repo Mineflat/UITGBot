@@ -45,7 +45,7 @@ namespace UITGBot.TGBot
             {
                 UILogger.AddLog("Can't keep up! Too many errors occured in last 15 seconds", "FATAL");
                 cancellationToken?.Cancel();
-                Program.OnPanic();
+                Program.OnPanic("Can't keep up! Too many errors occured in last 15 seconds");
             }
         }
         #endregion
@@ -76,6 +76,7 @@ namespace UITGBot.TGBot
             UILogger.AddLog($"Started bot @{BotName}");
             Logging.UILogger.InitUILogger();
             Storage.SetupOK = true;
+
             Core.UIRenderer.RestartUI();
         }
         /// <summary>

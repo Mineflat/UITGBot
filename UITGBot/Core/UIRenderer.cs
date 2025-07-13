@@ -40,7 +40,7 @@ namespace UITGBot.Core
             new UIScreenItem()
             {
                 Title = "Остановка бота и выход",
-                ExecAfter = Program.OnPanic
+                ExecAfter = () => Program.OnPanic("Выход по ручной остановке администратором")
             }
         };
         private static CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();

@@ -19,8 +19,9 @@ namespace UITGBot
         /// <summary>
         /// Вызов этого метода продолжит выполнения контекста в методе Main, что в большинстве случаев остановит все системные процессы
         /// </summary>
-        public static void OnPanic()
+        public static void OnPanic(string errorMessage = "Сработал метод OnPanic()")
         {
+            Console.WriteLine(errorMessage);
             Console.CursorVisible = true;
             _resetEvent.Set();
             Environment.Exit(1);
@@ -93,7 +94,7 @@ namespace UITGBot
             Console.WriteLine($"\t\t\tEnvironment=\"TGBOT_SECRET_KEY={password}\"");
             Console.ResetColor();
             cryptor = null;
-            OnPanic();
+            OnPanic("Нормальный выход для EncryptSensetiveStrings");
         }
         static void Main(string[] args)
         {

@@ -36,7 +36,7 @@ namespace UITGBot.Logging
                 case "FATAL":
                     logString = logString.Replace($"{severity}", $"[darkred][[{severity}]][[{DateTime.Now.ToString("dd.MM.yyyy hh:mm:ss")}]]:[/]");
                     Storage.Logger?.Logger.Fatal(message);
-                    Program.OnPanic();
+                    Program.OnPanic($"Критическая ошибка: {message}");
                     break;
                 case "MESSAGE":
                 case "VERBOSE":

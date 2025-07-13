@@ -62,10 +62,10 @@ namespace UITGBot.Core
                     }
                 }
             }
-            catch
+            catch (Exception e)
             {
-                Console.WriteLine("Не удалось расшифровать значения из конфигурационного файла\nВы уверены, что указали правильный пароль?");
-                Program.OnPanic();
+                Console.WriteLine(e.Message);
+                Program.OnPanic("Не удалось расшифровать значения из конфигурационного файла\nВы уверены, что указали правильный пароль?");
                 return string.Empty;
             }
         }
