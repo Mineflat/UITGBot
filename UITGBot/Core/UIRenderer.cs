@@ -39,6 +39,11 @@ namespace UITGBot.Core
             },
             new UIScreenItem()
             {
+                Title = "IU command editor",
+                ExecAfter = UICommandCreator.CreateCommand
+            },
+            new UIScreenItem()
+            {
                 Title = "Остановка бота и выход",
                 ExecAfter = () => Program.OnPanic("Выход по ручной остановке администратором")
             }

@@ -41,7 +41,7 @@ namespace UITGBot.TGBot.CommandTypes
                 string text = await File.ReadAllTextAsync(FilePath, encoding: Encoding.UTF8);
                 if (string.IsNullOrEmpty(text)) throw new Exception("В указанном файле отсутствует текст");
                 if (text.Length > 4096) throw new Exception("Текст в указанном файле имеет длину более 4096 символов - это ограничение Телеграмм");
-                await BotCommand.SendMessage(text, this.ReplyPrivateMessages, client, update, token);
+                await BotCommand.SendMessage(text, this.ReplyPrivateMessages, client, update, token, this.SendMessageAsReply);
                 // Выполнение каскадной команды
                 if (RunAfter != null)
                 {
@@ -55,7 +55,7 @@ namespace UITGBot.TGBot.CommandTypes
             catch (Exception e)
             {
                 //this.Enabled = false;
-                await BotCommand.SendMessage($"Команда `{this.Name}` не может быть выполнена:\n{e.Message}", this.ReplyPrivateMessages, client, update, token);
+                await BotCommand.SendMessage($"Команда `{this.Name}` не может быть выполнена:\n{e.Message}", this.ReplyPrivateMessages, client, update, token, this.SendMessageAsReply);
             }
         }
     }

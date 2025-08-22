@@ -65,7 +65,7 @@ namespace UITGBot.TGBot.CommandTypes
             try
             {
                 // Отписаться в чат, что задача успешно поставлена на выполнение
-                await BotCommand.SendMessage($"Задача успешно поставлена на выполнение. Таймаут выполнения для этой задачи: {(Timeout <= 0 ? Timeout : "не установлен")}", this.ReplyPrivateMessages, client, update, token);
+                await BotCommand.SendMessage($"Задача успешно поставлена на выполнение. Таймаут выполнения для этой задачи: {(Timeout <= 0 ? Timeout : "не установлен")}", this.ReplyPrivateMessages, client, update, token, this.SendMessageAsReply);
                 var outputBuilder = new StringBuilder();
                 var process = new Process()
                 {
@@ -106,11 +106,11 @@ namespace UITGBot.TGBot.CommandTypes
                 // Отправка результата в чат
                 if (SendTextOutputToChat)
                 {
-                    await BotCommand.SendMessage($"{result}", this.ReplyPrivateMessages, client, update, token);
+                    await BotCommand.SendMessage($"{result}", this.ReplyPrivateMessages, client, update, token, this.SendMessageAsReply);
                 }
                 else
                 {
-                    await BotCommand.SendMessage($"Выполнение команды завершено", this.ReplyPrivateMessages, client, update, token);
+                    await BotCommand.SendMessage($"Выполнение команды завершено", this.ReplyPrivateMessages, client, update, token, this.SendMessageAsReply);
                 }
 
                 // Выполнение каскадной команды
@@ -125,7 +125,7 @@ namespace UITGBot.TGBot.CommandTypes
             catch (Exception e)
             {
                 //this.Enabled = false;
-                await BotCommand.SendMessage($"Команда {this.Name} не может быть выполнена:\n{e.Message}", this.ReplyPrivateMessages, client, update, token);
+                await BotCommand.SendMessage($"Команда {this.Name} не может быть выполнена:\n{e.Message}", this.ReplyPrivateMessages, client, update, token, this.SendMessageAsReply);
             }
         }
 

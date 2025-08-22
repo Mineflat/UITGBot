@@ -80,7 +80,7 @@ namespace UITGBot.TGBot
         /// Чтобы избежать создания нескольких одинаковых команд, 
         /// каждая команда может иметь Алиас (альтернативное имя), по которой ее можно вызвать 
         /// </summary>
-        public List<string> AlternativeNames { get; set; } = new List<string>();   
+        public List<string> AlternativeNames { get; set; } = new List<string>();
         /// <summary>
         /// Действие, которое будет вызвано после запуска первой команды
         /// </summary>
@@ -89,6 +89,10 @@ namespace UITGBot.TGBot
         /// Список ID пользователей в телеграмм, которые точно НЕ могут выполнить эту команду
         /// </summary>
         public List<long> BannedUserIDs { get; set; } = new List<long>();
+        /// <summary>
+        /// Список ID пользователей в телеграмм, которые точно НЕ могут выполнить эту команду
+        /// </summary>
+        public bool SendMessageAsReply { get; set; } = false;
 
         /// <summary>
         /// Проверяет команду перед ее добавлением в список доступных действий 
@@ -122,7 +126,7 @@ namespace UITGBot.TGBot
             await Task.Delay(0);
             throw new Exception($"Ты ебанат вызывать функцию в классе-родителе? ({Name})");
         }
-        public static async Task<bool> SendMessage(string message, bool replyPrivateMessages, ITelegramBotClient client, Telegram.Bot.Types.Update update, CancellationToken token)
+        public static async Task<bool> SendMessage(string message, bool replyPrivateMessages, ITelegramBotClient client, Telegram.Bot.Types.Update update, CancellationToken token, bool replyMessage = false)
         {
             UILogger.AddLog($" Результат выполнения команды {(string.IsNullOrEmpty(update.Message?.Text) ? "(пустое сообщение)" : update.Message.Text)}");
             if (message.Length > 4096)
@@ -135,6 +139,7 @@ namespace UITGBot.TGBot
                 if (update.Message == null || update.Message.From == null) { UILogger.AddLog($"Сообщение не может быть отправлено, т.к. параметр update.Message.From пуст", "ERROR"); return false; }
                 if (replyPrivateMessages)
                 {
+
                     await client.SendMessage(update.Message.From.Id,
                         message,
                         cancellationToken: token,
@@ -143,11 +148,21 @@ namespace UITGBot.TGBot
                 }
                 else
                 {
-                    await client.SendMessage(update.Message.Chat.Id,
-                        message,
-                        replyParameters: update.Message.MessageId,
-                        cancellationToken: token,
-                        parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown);
+                    if (replyMessage)
+                    {
+                        await client.SendMessage(update.Message.Chat.Id,
+                            message,
+                            replyParameters: update.Message.MessageId,
+                            cancellationToken: token,
+                            parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown);
+                    }
+                    else
+                    {
+                        await client.SendMessage(update.Message.Chat.Id,
+                            message,
+                            cancellationToken: token,
+                            parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown);
+                    }
                     UILogger.AddLog($"Сообщение отправлено В ПУБЛИЧНЫЙ ЧАТ {update.Message.Chat.Username} ({update.Message.Chat.Id})");
                 }
             }

@@ -96,7 +96,7 @@ namespace UITGBot.TGBot.CommandTypes
             {
                 //this.Enabled = false;
                 UILogger.AddLog($"Команда {this.Name} не может быть выполнена:\n{e.Message}", "ERROR");
-                await BotCommand.SendMessage($"Команда {this.Name} не может быть выполнена:\n{e.Message}", this.ReplyPrivateMessages, client, update, token);
+                await BotCommand.SendMessage($"Команда {this.Name} не может быть выполнена:\n{e.Message}", this.ReplyPrivateMessages, client, update, token, this.SendMessageAsReply);
             }
         }
     }

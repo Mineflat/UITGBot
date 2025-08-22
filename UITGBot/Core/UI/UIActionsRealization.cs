@@ -268,7 +268,7 @@ namespace UITGBot.Core.UI
             {
                 var cmd = Storage.BotCommands[i];
                 if (i == editSelectedCommand)
-                    actionsTable.AddRow($">> [green]{cmd.Name}[/]");
+                    actionsTable.AddRow($">> [bold][green]{cmd.Name}[/][/] [grey]{cmd.CommandType.ToLower()}[/]");
                 else
                     actionsTable.AddRow(
                         cmd.Enabled
@@ -284,7 +284,8 @@ namespace UITGBot.Core.UI
 
             // C) Название выбранного действия
             Panel infoPanel = (editSelectedCommand >= 0 && editSelectedCommand < Storage.BotCommands.Count)
-                ? new Panel($"Настройки для действия [green1]{Storage.BotCommands[editSelectedCommand].Name}[/]")
+                ? new Panel($"Настройки для действия [bold][green1]{Storage.BotCommands[editSelectedCommand].Name}[/][/] " +
+                $"с типом [deepskyblue2]{Storage.BotCommands[editSelectedCommand].CommandType.ToLower()}[/]")
                     .Border(BoxBorder.Rounded)
                     .BorderColor(Spectre.Console.Color.Yellow)
                     .Expand()
