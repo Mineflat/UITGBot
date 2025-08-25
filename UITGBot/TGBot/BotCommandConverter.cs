@@ -42,8 +42,16 @@ namespace UITGBot.TGBot
                 "simple" => jsonObject.ToObject<SimpleCommand>(serializer),
                 _ => throw new JsonException($"Неизвестный тип команды: {type}")
             };
-            Storage.Statisticks.botActionsCount++;
-            if (command != null && command.Enabled) Storage.Statisticks.botActiveActionsCount++;
+            if (command != null)
+            {
+                var exists = Storage.BotCommands.Any(c => string.Equals(c.Name?.Trim(), command.Name?.Trim(), StringComparison.OrdinalIgnoreCase));
+                // Тут тоже нужно добавить логирование, но ИМХО пока похуям
+                if (!exists)
+                {
+                    Storage.Statisticks.botActionsCount++;
+                    if (command.Enabled) Storage.Statisticks.botActiveActionsCount++;
+                }
+            }
             switch (command?.CommandType.ToLower().Trim())
             {
                 case "full_text":

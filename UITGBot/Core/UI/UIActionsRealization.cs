@@ -196,16 +196,17 @@ namespace UITGBot.Core.UI
                                     }
                                     else
                                     {
-                                        if (Storage.BotCommands.FirstOrDefault(x => x.Name.ToLower().Trim() == newCommand.Name.ToLower().Trim()) == null)
+                                        var exists = Storage.BotCommands.Any(c => string.Equals(c.Name?.Trim(), newCommand.Name?.Trim(), StringComparison.OrdinalIgnoreCase));
+                                        if (exists)
+                                        {
+                                            UILogger.AddLog($"Невозможно добавить команду [green1]\"{newCommand.Name}\"[/] с типом [underline]{newCommand.CommandType}[/]: команда с таким именем уже существует", "ERROR");
+                                        }
+                                        else
                                         {
                                             Storage.BotCommands.Add(newCommand);
                                             // Сортировка по имени
                                             Storage.BotCommands.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.Ordinal));
                                             UILogger.AddLog($"Успешно добавлена команда [green1]\"{newCommand.Name}\"[/] с типом [underline]{newCommand.CommandType}[/]");
-                                        }
-                                        else
-                                        {
-                                            UILogger.AddLog($"Невозможно добавить команду [green1]\"{newCommand.Name}\"[/] с типом [underline]{newCommand.CommandType}[/]: команда с таким именем уже существует", "ERROR");
                                         }
                                     }
                                 }
