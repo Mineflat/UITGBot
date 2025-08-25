@@ -208,6 +208,8 @@ namespace UITGBot.Core
                 }
                 if (Storage.BotCommands.Count > 0)
                 {
+                    // Сортировка по имени
+                    Storage.BotCommands.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.Ordinal));
                     return (true, $"Список команд пополнен. Доступно команд: {Storage.BotCommands.Count}");
                 }
                 else

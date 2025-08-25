@@ -199,6 +199,8 @@ namespace UITGBot.Core.UI
                                         if (Storage.BotCommands.FirstOrDefault(x => x.Name.ToLower().Trim() == newCommand.Name.ToLower().Trim()) == null)
                                         {
                                             Storage.BotCommands.Add(newCommand);
+                                            // Сортировка по имени
+                                            Storage.BotCommands.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.Ordinal));
                                             UILogger.AddLog($"Успешно добавлена команда [green1]\"{newCommand.Name}\"[/] с типом [underline]{newCommand.CommandType}[/]");
                                         }
                                         else
