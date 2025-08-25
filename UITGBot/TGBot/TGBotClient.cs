@@ -235,7 +235,7 @@ namespace UITGBot.TGBot
                     return new UpdateHandleResult(ErrorMessage, ReplyMessage, hasErrors, selectedCommand);
                 }
                 // Парсинг аргументов команды (существуют и разрешены ли они) 
-                if ((!selectedCommand.IgnoreMessageText) && (selectedCommand.Name.Trim().ToLower() != message.Trim().ToLower()))
+                if ((selectedCommand.IgnoreMessageText) && (selectedCommand.Name.Trim().ToLower() != message.Trim().ToLower()))
                 {
                     hasErrors = true;
                     ReplyMessage = $"Эта команда не подразумевает аргументов";

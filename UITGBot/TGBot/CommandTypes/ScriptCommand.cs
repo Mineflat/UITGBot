@@ -43,6 +43,12 @@ namespace UITGBot.TGBot.CommandTypes
         public int Timeout { get; set; } = 0;
 
         /// <summary>
+        /// Разрешает отправлять алерт в чат о том, что скрипт поставлен в очередь на выполнение 
+        /// Полезно, если этот скрипт обычно долго выполняется
+        /// </summary>
+        public bool SendAlertToChatBeforeExecutingScript { get; set; } = false;
+
+        /// <summary>
         /// Функция верификации правильности заполнения команды
         /// </summary>
         /// <returns>Успешность верификации команды</returns>
@@ -66,7 +72,11 @@ namespace UITGBot.TGBot.CommandTypes
             try
             {
                 // Отписаться в чат, что задача успешно поставлена на выполнение
-                await BotCommand.SendMessage($"Задача успешно поставлена на выполнение. Таймаут выполнения для этой задачи: {(Timeout <= 0 ? Timeout : "не установлен")}", this.ReplyPrivateMessages, client, update, token, this.SendMessageAsReply);
+                if (SendAlertToChatBeforeExecutingScript)
+                {
+                    await BotCommand.SendMessage($"Задача успешно поставлена на выполнение. Таймаут выполнения для этой задачи: {(Timeout <= 0 ? "не установлен" : Timeout)}", this.ReplyPrivateMessages, client, update, token, this.SendMessageAsReply);
+                }
+                UILogger.AddLog($"Задача \"{this.Name}\" успешно поставлена на выполнение. Таймаут выполнения для этой задачи: {(Timeout <= 0 ? "не установлен" : Timeout)}", "DEBUG");
                 var outputBuilder = new StringBuilder();
                 string? args = ScriptArgs ?? string.Empty;
                 if (AllowArgsFromChat)
