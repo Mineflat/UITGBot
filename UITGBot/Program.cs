@@ -60,7 +60,7 @@ namespace UITGBot
             Console.Clear();
             Console.ForegroundColor = ConsoleColor.Black;
             Console.BackgroundColor = ConsoleColor.Red;
-            Console.WriteLine("\t    [!!!]    Обратите анимение!    [!!!]");
+            Console.WriteLine("\t    [!!!]    Обратите внимение!    [!!!]");
             Console.ResetColor();
             Console.WriteLine("\t\tСледующую секретную строку вы видите в последний раз:\n");
             Console.ForegroundColor = ConsoleColor.Yellow;

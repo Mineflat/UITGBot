@@ -90,7 +90,8 @@ namespace UITGBot.TGBot
         /// </summary>
         public List<long> BannedUserIDs { get; set; } = new List<long>();
         /// <summary>
-        /// Список ID пользователей в телеграмм, которые точно НЕ могут выполнить эту команду
+        /// Определяет, будет ли результат команды отправлен пользователю ответным сообщением, 
+        /// или отправится в чат напрямую (без привязки к сообщению пользователя)
         /// </summary>
         public bool SendMessageAsReply { get; set; } = false;
 

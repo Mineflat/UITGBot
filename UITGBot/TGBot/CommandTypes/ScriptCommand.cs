@@ -27,7 +27,7 @@ namespace UITGBot.TGBot.CommandTypes
         /// <summary>
         /// Разрешает пользователю передавать аргументы в функцию прямо из чата
         /// </summary>
-        //public bool AllowArgsFromChat { get; set; } = false;
+        public bool AllowArgsFromChat { get; set; } = false;
         /// <summary>
         /// Требует передачи аргументов скрипту. Если аргументов переданно не будет, команда не будет выполнена
         /// </summary>
@@ -62,17 +62,29 @@ namespace UITGBot.TGBot.CommandTypes
         /// <returns>Кортеж: true - если инициализация прошла успешно, *string - сообщение об ошибке</returns>
         public override async Task ExecuteCommand(ITelegramBotClient client, Telegram.Bot.Types.Update update, CancellationToken token)
         {
+            if (update.Message == null) return;
             try
             {
                 // Отписаться в чат, что задача успешно поставлена на выполнение
                 await BotCommand.SendMessage($"Задача успешно поставлена на выполнение. Таймаут выполнения для этой задачи: {(Timeout <= 0 ? Timeout : "не установлен")}", this.ReplyPrivateMessages, client, update, token, this.SendMessageAsReply);
                 var outputBuilder = new StringBuilder();
+                string? args = ScriptArgs ?? string.Empty;
+                if (AllowArgsFromChat)
+                {
+                    if (!string.IsNullOrEmpty(update.Message.Text))
+                    {
+                        args = update.Message.Text
+                            .Replace(Storage.SystemSettings.BOT_INIT_TOKEN, "")
+                            .Replace(this.Name, "")
+                            .Trim();
+                    }
+                }
                 var process = new Process()
                 {
                     StartInfo = new ProcessStartInfo
                     {
                         FileName = FilePath,
-                        Arguments = ScriptArgs,
+                        Arguments = args,
                         RedirectStandardOutput = true,
                         RedirectStandardError = true,
                         UseShellExecute = false,
