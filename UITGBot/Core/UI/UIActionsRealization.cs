@@ -276,7 +276,7 @@ namespace UITGBot.Core.UI
                     actionsTable.AddRow(
                         cmd.Enabled
                           ? cmd.Name
-                          : $"[silver]{cmd.Name} (disabled)[/]"
+                          : $"[silver]{cmd.Name}[/] [red](disabled)[/]"
                     );
             }
             var actionsPanel = new Panel(actionsTable)
