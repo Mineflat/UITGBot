@@ -39,6 +39,10 @@ namespace UITGBot.Core.Messaging
         /// История чата
         /// </summary>
         public List<Telegram.Bot.Types.Message> ChatStory { get; set; } = new List<Telegram.Bot.Types.Message>();
+        /// <summary>
+        /// Определяет, через сколько сообщений будет произведена попытка синхронизации версий чата с тем, что на самом деле есть в CSV-файле
+        /// </summary>
+        private short _chatFileSyncCounter = 0; // Я ставлю в 0, чтобы при первом же сообщении в чат производилась попытка синхронизации истории чата из файла 
 
         public ChatActivity(Telegram.Bot.Types.Chat chat)
         {
@@ -60,6 +64,12 @@ namespace UITGBot.Core.Messaging
                 // 3) Рассылаем всем подписчикам:
                 MessageReceived?.Invoke(message);
                 WriteChatStory(message);
+                if (_chatFileSyncCounter > 0) _chatFileSyncCounter--;
+                else
+                {
+                    TrySyncChatStoryFromFile();
+                    _chatFileSyncCounter = 64;
+                }
             }
             // Добавление информации о пользователе, от которого пришло сообщение
             if (message.From == null) return;
@@ -70,7 +80,7 @@ namespace UITGBot.Core.Messaging
                 UILogger.AddLog($"Кажется, я знаю нового пользователя: {message.From.Id} (@{message.From.Username}, {message.From.FirstName} {message.From.LastName})", "DEBUG");
             }
         }
-        
+
         /// <summary>
         /// Обновляет историю записей в сообщение в CSV-файле
         /// </summary>
@@ -113,6 +123,22 @@ namespace UITGBot.Core.Messaging
             {
                 UILogger.AddLog($"Ошибка при записи истории чата \"{chatTitle}\": {directoryWriteException.Message}", "ERROR");
             }
+        }
+
+        public async void TrySyncChatStoryFromFile()
+        {
+            string targetStorageDir = Path.Combine(Storage.SystemSettings.ChatActivityStoragePath, $"{chatTitle.Replace(" ", string.Empty).Trim()}");
+            string filePath = Path.Combine(targetStorageDir, $"{chatTitle.Replace(" ", string.Empty).Trim()}.msgsdb.csv");
+            if (!File.Exists(filePath)) { UILogger.AddLog($"Не удалось найти историю для чата \"{chatTitle}\". Вероятно, она не велась ранее", "DEBUG"); ; return; }
+
+            // Тут должен быть ебический парсер, который:
+            // 1. Читает файл с историей (если он есть)
+            // 2. Парсит CSV-заголовки и содержимое файла в объект типа List<Telegram.Bot.Types.Message>
+            // 3. Обновляет переменную ChatStory новыми данными из CSV-файла
+            // 4. Желательно:
+            // Каким-то образом делает так, чтобы история чата была проверена и не изменялась.
+            // Потому что при изменении CSV-файла, история чата будет не реальной, а той, которая была оттуда подгружена 
+            // 5. Логирует все действия в формате DEBUG
         }
         /// <summary>
         /// Выполняет обрезку строки между двумя символами

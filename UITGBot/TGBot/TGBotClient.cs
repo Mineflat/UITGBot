@@ -109,7 +109,7 @@ namespace UITGBot.TGBot
                 Storage.Statisticks.botChatsKnown++;
             }
             currentChat?.UpdateChatStory(update.Message); // Добавляем сообщение в пул чатов
-            Storage.Statisticks.botMessagesReceived++; // ИНкрементируем кол-во полученных текстовых сообщений
+            Storage.Statisticks.botMessagesReceived++; // Инкрементируем кол-во полученных текстовых сообщений
 
             if (update.Message.ForwardFrom != null) return; // Чтобы бот не воспринимал пересланные сообщения как команды
             // Обработка текста сообщения (проверка на пустоту)
