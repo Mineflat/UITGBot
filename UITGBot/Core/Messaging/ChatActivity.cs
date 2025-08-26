@@ -1,11 +1,15 @@
 ﻿using Microsoft.AspNetCore.Server.HttpSys;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http.Headers;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using UITGBot.Logging;
+using Spectre.Console;
+using System.Globalization;
 
 namespace UITGBot.Core.Messaging
 {
@@ -36,8 +40,6 @@ namespace UITGBot.Core.Messaging
         /// </summary>
         public List<Telegram.Bot.Types.Message> ChatStory { get; set; } = new List<Telegram.Bot.Types.Message>();
 
-
-
         public ChatActivity(Telegram.Bot.Types.Chat chat)
         {
             CurrentChat = chat;
@@ -45,6 +47,10 @@ namespace UITGBot.Core.Messaging
             chatUniqID = Guid.NewGuid();
             UILogger.AddLog($"Кажется, я изучил новый чат, в который я могу писать: {chat.Id} (@{chat.Username}, {chat.FirstName} {chat.LastName})", "DEBUG");
         }
+        /// <summary>
+        /// Обновляет историю сообщений в чате (при получении нового сообщения)
+        /// </summary>
+        /// <param name="message">Целевое сообщенние в чате</param>
         public void UpdateChatStory(Telegram.Bot.Types.Message message)
         {
             // Проверяем, что сообщение не является дубликатом (его уникальный ID не существут в списке)
@@ -53,6 +59,7 @@ namespace UITGBot.Core.Messaging
                 ChatStory.Add(message);
                 // 3) Рассылаем всем подписчикам:
                 MessageReceived?.Invoke(message);
+                WriteChatStory(message);
             }
             // Добавление информации о пользователе, от которого пришло сообщение
             if (message.From == null) return;
@@ -62,6 +69,70 @@ namespace UITGBot.Core.Messaging
                 Storage.Statisticks.botUsersKnown++;
                 UILogger.AddLog($"Кажется, я знаю нового пользователя: {message.From.Id} (@{message.From.Username}, {message.From.FirstName} {message.From.LastName})", "DEBUG");
             }
+        }
+        
+        /// <summary>
+        /// Обновляет историю записей в сообщение в CSV-файле
+        /// </summary>
+        /// <param name="message">Целевое сообщение</param>
+        public async void WriteChatStory(Telegram.Bot.Types.Message message)
+        {
+            if (!Storage.SystemSettings.StoreChatActivity) return;
+            string targetStorageDir = Path.Combine(Storage.SystemSettings.ChatActivityStoragePath, $"{chatTitle.Replace(" ", string.Empty).Trim()}");
+            string filePath = Path.Combine(targetStorageDir, $"{chatTitle.Replace(" ", string.Empty).Trim()}.msgsdb.csv");
+            try
+            {
+                // Создание директории для этого чата, если она не существует
+                if (!Directory.Exists(targetStorageDir))
+                {
+                    Directory.CreateDirectory(targetStorageDir);
+                    UILogger.AddLog($"Создана новая директория для чата \"{chatTitle}\": {targetStorageDir}", "DEBUG");
+                }
+                string header = string.Empty;
+                string content = string.Empty;
+                foreach (FieldInfo field in typeof(Telegram.Bot.Types.Message).GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static))
+                {
+                    header += $"{GetStringBetweenCharacters(field.Name, '<', '>')};";
+                    object? c = field.GetValue(message);
+                    if (c != null)
+                    {
+                        content += c.ToString() + ';';
+                        continue;
+                    }
+                    else content += "NULL;";
+                }
+                if (!File.Exists(filePath))
+                {
+                    // Write header to a file
+                    await File.AppendAllTextAsync(filePath, header.Remove(header.Length - 1) + Environment.NewLine);
+                }
+                // Append record to the file
+                await File.AppendAllTextAsync(filePath, content.Remove(content.Length - 1) + Environment.NewLine);
+            }
+            catch (Exception directoryWriteException)
+            {
+                UILogger.AddLog($"Ошибка при записи истории чата \"{chatTitle}\": {directoryWriteException.Message}", "ERROR");
+            }
+        }
+        /// <summary>
+        /// Выполняет обрезку строки между двумя символами
+        /// </summary>
+        /// <param name="input">Целевая строка</param>
+        /// <param name="charFrom">Символ, с которого начинать обрезку</param>
+        /// <param name="charTo">Символ, на которым заканчивать обрезку</param>
+        /// <returns>Строка между двумя символами</returns>
+        public static string GetStringBetweenCharacters(string input, char charFrom, char charTo)
+        {
+            int posFrom = input.IndexOf(charFrom);
+            if (posFrom != -1) //if found char
+            {
+                int posTo = input.IndexOf(charTo, posFrom + 1);
+                if (posTo != -1) //if found char
+                {
+                    return input.Substring(posFrom + 1, posTo - posFrom - 1);
+                }
+            }
+            return string.Empty;
         }
     }
 }

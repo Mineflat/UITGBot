@@ -82,10 +82,20 @@ namespace UITGBot.Core
         /// </summary>
         [JsonRequired]
         public required string ErrorReplyPath { get; set; }
-        /// <summary> ***
+        /// <summary>
         /// Включает или отключает Debug-мод
         /// </summary>
         public bool DebugMode { get; internal set; } = false;
+
+        /// <summary>
+        /// Позволяет записывать историю чатов в файл
+        /// </summary>
+        public bool StoreChatActivity { get; internal set; } = true;
+        /// <summary>
+        /// Указывает, в какой именно директории будут храниться файлы истории чатов
+        /// </summary>
+        public string ChatActivityStoragePath { get; set; } = @"current-chats";
+
         #endregion
         #region
         #endregion

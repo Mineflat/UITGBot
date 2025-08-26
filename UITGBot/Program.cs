@@ -4,8 +4,10 @@ using Polly;
 using Spectre.Console;
 using System;
 using System.IO;
+using System.Reflection;
 using System.Text;
 using UITGBot.Core;
+using UITGBot.Core.Messaging;
 using UITGBot.Logging;
 
 namespace UITGBot
@@ -113,7 +115,7 @@ namespace UITGBot
                         {
                             UILogger.AddLog($"Неверное использование!\nДля защиты данных используйте:\n\t\t./{AppDomain.CurrentDomain.FriendlyName} --secure", "FATAL");
                             Environment.Exit(1);
-                        } 
+                        }
                         else
                         {
                             Initialize(args = new string[]{
@@ -130,7 +132,7 @@ namespace UITGBot
                     UILogger.AddLog($"Неверное использование!\nДля запуска используйте:\n\t\t./{AppDomain.CurrentDomain.FriendlyName} [/full/path/to/config.json] [decrypt_password]", "FATAL");
                     break;
             }
-            
+
             // Ждем, пока эвент не скинет кто-то другой
             _resetEvent.WaitOne();
         }
@@ -158,7 +160,7 @@ namespace UITGBot
                 // Однако, и ошибки не будет. Если метод вернул нам true, значит что ВСЕ этапы инициализации были успешно закончены
                 // Это - узкое горлышко этого ПО
                 UILogger.AddLog("System setup done successfully");
-                Storage._configurationPath = args[1]; 
+                Storage._configurationPath = args[1];
             }
             else
             {
