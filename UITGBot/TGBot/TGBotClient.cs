@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Spectre.Console;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Linq;
@@ -171,6 +172,24 @@ namespace UITGBot.TGBot
         protected static Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
         {
             UILogger.AddLog(exception.Message, "ERROR");
+            if (string.Equals(exception.Message, "Request timed out", StringComparison.OrdinalIgnoreCase))
+            {
+                Console.Clear();
+                var table = new Table().Centered();
+                AnsiConsole.Progress()
+                    .Start(ctx =>
+                    {
+                        // Define tasks
+                        var task1 = ctx.AddTask("[green]Похоже, что сервера телеграм стали недоступны на некоторое время... Ждем 30 секунд и повторяем[/]");
+                        while (!ctx.IsFinished)
+                        {
+                            Thread.Sleep(1000);
+                            task1.Increment(3);
+                        }
+                    }); // 30 секунд таймаута перед тем как отправлять следующее сообщение 
+                botErrorsLeft = 5;
+                return Task.CompletedTask;
+            }
             botErrorsLeft -= 1;
             return Task.CompletedTask;
         }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Spectre.Console;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,6 +20,7 @@ namespace UITGBot.Logging
             severity = severity.ToUpper();
             //string logString = $"{severity} {message.Replace("[", "[[").Replace("]", "]]")}";
             string logString = $"{severity} {message}";
+            logString = Markup.Escape(logString);
             switch (severity.Trim().ToUpper())
             {
                 case "INFORMATION":

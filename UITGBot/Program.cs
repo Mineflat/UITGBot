@@ -100,7 +100,6 @@ namespace UITGBot
         }
         static void Main(string[] args)
         {
-            //Initialize(new string[] { "G:\\config.json", "QPZU-JT45-VZTT-RB53" });
             string? passwd = Environment.GetEnvironmentVariable("TGBOT_SECRET_KEY");
             switch (args.Length)
             {

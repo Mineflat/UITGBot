@@ -42,7 +42,7 @@ namespace UITGBot.Core.Messaging
         /// <summary>
         /// Определяет, через сколько сообщений будет произведена попытка синхронизации версий чата с тем, что на самом деле есть в CSV-файле
         /// </summary>
-        private short _chatFileSyncCounter = 0; // Я ставлю в 0, чтобы при первом же сообщении в чат производилась попытка синхронизации истории чата из файла 
+        public short _chatFileSyncCounter { get; private set; } = 0; // Я ставлю в 0, чтобы при первом же сообщении в чат производилась попытка синхронизации истории чата из файла 
 
         public ChatActivity(Telegram.Bot.Types.Chat chat)
         {
@@ -68,7 +68,7 @@ namespace UITGBot.Core.Messaging
                 else
                 {
                     TrySyncChatStoryFromFile();
-                    _chatFileSyncCounter = 64;
+                    _chatFileSyncCounter = 64; // Каждые 64 сообщения бот попытается синхронизироваться с файлом
                 }
             }
             // Добавление информации о пользователе, от которого пришло сообщение
@@ -127,8 +127,8 @@ namespace UITGBot.Core.Messaging
 
         public async void TrySyncChatStoryFromFile()
         {
-            string targetStorageDir = Path.Combine(Storage.SystemSettings.ChatActivityStoragePath, $"{chatTitle.Replace(" ", string.Empty).Trim()}");
-            string filePath = Path.Combine(targetStorageDir, $"{chatTitle.Replace(" ", string.Empty).Trim()}.msgsdb.csv");
+            string targetStorageDir = Path.Combine(Storage.SystemSettings.ChatActivityStoragePath, $"{chatTitle.Replace(" ", "_").Trim()}");
+            string filePath = Path.Combine(targetStorageDir, $"{chatTitle.Replace(" ", "_").Trim()}.msgsdb.csv");
             if (!File.Exists(filePath)) { UILogger.AddLog($"Не удалось найти историю для чата \"{chatTitle}\". Вероятно, она не велась ранее", "DEBUG"); ; return; }
 
             // Тут должен быть ебический парсер, который:
