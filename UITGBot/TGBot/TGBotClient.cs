@@ -25,13 +25,10 @@ namespace UITGBot.TGBot
         public static System.Timers.Timer? _errorTimer { get; protected set; }
         public TGBotClient()
         {
-            if (!Storage.SystemSettings.IgnoreErrors)
-            {
-                _errorTimer = new System.Timers.Timer(30000);
-                _errorTimer.Elapsed += (s, e) => Task.Run(CheckDropdown);
-                _errorTimer.AutoReset = true;
-                _errorTimer.Start();
-            }
+            _errorTimer = new System.Timers.Timer(30000);
+            _errorTimer.Elapsed += (s, e) => Task.Run(CheckDropdown);
+            _errorTimer.AutoReset = true;
+            _errorTimer.Start();
             InitializeBot();
         }
         #region Системное
@@ -44,9 +41,11 @@ namespace UITGBot.TGBot
             if (botErrorsLeft > 0 && botErrorsLeft < 5) { UILogger.AddLog("Сброшен таймер для восстановления числа доступных ошибок. Теперь их снова 5", "DEBUG"); botErrorsLeft = 5; return; }
             if (botErrorsLeft <= 0)
             {
-                UILogger.AddLog("Can't keep up! Too many errors occured in last 15 seconds", "FATAL");
-                cancellationToken?.Cancel();
-                Program.OnPanic("Can't keep up! Too many errors occured in last 15 seconds");
+                if (!Storage.SystemSettings.IgnoreErrors)
+                {
+                    cancellationToken?.Cancel();
+                    UILogger.AddLog("Can't keep up! Too many errors occured in last 15 seconds", "FATAL");
+                }
             }
         }
         #endregion
