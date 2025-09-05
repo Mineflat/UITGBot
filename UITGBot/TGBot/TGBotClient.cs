@@ -137,7 +137,7 @@ namespace UITGBot.TGBot
             if (proccessResult.HasErrors)
             {
                 UILogger.AddLog($"{proccessResult.ErrorMessage}", "ERROR");
-                if (!string.IsNullOrEmpty(proccessResult.ReplyMessage))
+                if (!string.IsNullOrEmpty(proccessResult.ReplyMessage)) await BotCommand.SendMessage($"{proccessResult.ReplyMessage}", false, client, update, token, true);
                     await BotCommand.SendMessage($"{proccessResult.ReplyMessage}", false, client, update, token, true);
                 return;
             }
@@ -238,7 +238,8 @@ namespace UITGBot.TGBot
             {
                 hasErrors = true;
                 ErrorMessage = $"Не удалось найти ни одной подходящей команды по ее основному имени\n        > {userID}: \"{message}\"";
-                // Тут будет логика поиска команды по ее альтернативным именам (если есть)
+                ReplyMessage = $"{ErrorMessage}.\nP.s.\nЕсли ты взял ее из `/help`, вероятно, она еще не настроена";
+                // Тут будет логика поиска команды по ее альтернативным именам (если они есть)
 
             }
             else
@@ -291,6 +292,5 @@ namespace UITGBot.TGBot
             return new UpdateHandleResult(ErrorMessage, ReplyMessage, hasErrors, selectedCommand);
         }
         #endregion
-
     }
 }

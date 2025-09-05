@@ -332,8 +332,10 @@ namespace UITGBot.Core
                         $"  [silver]Файл действий:[/] [grey]{Storage.SystemSettings.ActionsPath}[/]{Environment.NewLine}" +
                         $"  [silver]Файл ответов (положительные):[/] [grey]{Storage.SystemSettings.SuccessReplyPath}[/]{Environment.NewLine}" +
                         $"  [silver]Файл ответов (отрицательные):[/] [grey]{Storage.SystemSettings.ErrorReplyPath}[/]{Environment.NewLine}" +
-                        $"  [silver]Логи хранятся в:[/] [grey]{Storage.SystemSettings.LogDirectory}[/]{Environment.NewLine}";
-
+                        $"  [silver]Логи хранятся в:[/] [grey]{Storage.SystemSettings.LogDirectory}[/]{Environment.NewLine}" +
+                        $"  [silver]История чатов:[/] {(Storage.SystemSettings.StoreChatActivity ? 
+                            $"[lightskyblue1]{Storage.SystemSettings.ChatActivityStoragePath}[/]" 
+                            : "[purple_1]отключено[/]")}{Environment.NewLine}";
             // правая колонка → две строки: по одной диаграмме
             layout["right"].SplitRows(
                 new Layout("statA") { Size = 12 },
