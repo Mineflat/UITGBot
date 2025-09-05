@@ -49,6 +49,10 @@ namespace UITGBot.Logging
                     Storage.Logger?.Logger.Information($"[{severity}]: {message}");
                     Storage.Logger?.Logger.Verbose(message);
                     break;
+                case "EXECUTION RESULT":
+                    logString = logString.Replace($"{severity}", $"[green1][[{severity}]][[{DateTime.Now.ToString("dd.MM.yyyy hh:mm:ss")}]]:[/]");
+                    Storage.Logger?.Logger.Information(message);
+                    break;
                 default:
                     if (!Storage.SystemSettings.DebugMode) return;
                     logString = logString.Replace($"{severity}", $"[grey37][[{severity}]][[{DateTime.Now.ToString("dd.MM.yyyy hh:mm:ss")}]]:[/]");

@@ -108,8 +108,8 @@ namespace UITGBot.Core.UI
                                 .WithConverter(choice => choice ? "y" : "n"));
                         if (!deletionConfirmation) break;
                         Storage.BotCommands = Storage.BotCommands.FindAll(x => x.Name != Storage.BotCommands[editSelectedCommand].Name);
-                        UILogger.AddLog($"Администратор удалил действие [green1]{Storage.BotCommands[editSelectedCommand].Name}[/]", "WARNING");
-                        UILogger.AddLog($"Количество действий изменено: [green1]{Storage.BotCommands.Count}[/]", "DEBUG");
+                        UILogger.AddLog($"Администратор удалил действие {Storage.BotCommands[editSelectedCommand].Name}", "WARNING");
+                        UILogger.AddLog($"Количество действий изменено: {Storage.BotCommands.Count}", "DEBUG");
                         break;
                     // Создание нового действия (по шаблону)
                     case ConsoleKey.F5:

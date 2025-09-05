@@ -121,8 +121,8 @@ namespace UITGBot.TGBot
             if (string.IsNullOrEmpty(msgText)) return;
             // Логирование
             UILogger.AddLog(
-                $"[[{(string.IsNullOrEmpty(update.Message.Chat.Title) ? $"{update.Message.Chat.Id}" : update.Message.Chat.Title)}]]" +
-                $"[[{userName}]]: " +
+                $"[{(string.IsNullOrEmpty(update.Message.Chat.Title) ? $"{update.Message.Chat.Id}" : update.Message.Chat.Title)}]" +
+                $"[{userName}]: " +
                 $"{msgText}", "MESSAGE");
 
             msgText = msgText.ToLower().Trim();
