@@ -31,9 +31,9 @@ namespace UITGBot.TGBot.CommandTypes
                 UILogger.AddLog($"Команда {Name} не может быть применена, т.к. директория \"{DirPath}\" не существует. Команда отключена", "ERROR");
                 return false;
             }
-            UILogger.AddLog($"[[Команда]][[{Name}]]: Запуск первичной синхронизации директории: {DirPath}");
+            UILogger.AddLog($"[Команда][{Name}]: Запуск первичной синхронизации директории: {DirPath}");
             Task.Run(async () => await StartFileMonitorAsync(cts.Token));
-            UILogger.AddLog($"[[Команда]][[{Name}]]: Завершила первичную инициализацию");
+            UILogger.AddLog($"[Команда][{Name}]: Завершила первичную инициализацию");
             return true;
         }
 

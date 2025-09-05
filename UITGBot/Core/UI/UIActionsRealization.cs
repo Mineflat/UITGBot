@@ -192,21 +192,21 @@ namespace UITGBot.Core.UI
                                 {
                                     if (!newCommand.Verify())
                                     {
-                                        UILogger.AddLog($"Не удалось применить изменения для [underline]новой[/] команды \"{newCommand.Name}\" - команда не прошла верификацию", "WARNING");
+                                        UILogger.AddLog($"Не удалось применить изменения для новой команды \"{newCommand.Name}\" - команда не прошла верификацию", "WARNING");
                                     }
                                     else
                                     {
                                         var exists = Storage.BotCommands.Any(c => string.Equals(c.Name?.Trim(), newCommand.Name?.Trim(), StringComparison.OrdinalIgnoreCase));
                                         if (exists)
                                         {
-                                            UILogger.AddLog($"Невозможно добавить команду [green1]\"{newCommand.Name}\"[/] с типом [underline]{newCommand.CommandType}[/]: команда с таким именем уже существует", "ERROR");
+                                            UILogger.AddLog($"Невозможно добавить команду \"{newCommand.Name}\" с типом {newCommand.CommandType}: команда с таким именем уже существует", "ERROR");
                                         }
                                         else
                                         {
                                             Storage.BotCommands.Add(newCommand);
                                             // Сортировка по имени
                                             Storage.BotCommands.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.Ordinal));
-                                            UILogger.AddLog($"Успешно добавлена команда [green1]\"{newCommand.Name}\"[/] с типом [underline]{newCommand.CommandType}[/]");
+                                            UILogger.AddLog($"Успешно добавлена команда \"{newCommand.Name}\" с типом {newCommand.CommandType}");
                                         }
                                     }
                                 }
