@@ -216,11 +216,18 @@ namespace UITGBot.Core
         {
             if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("NOGUI"))) return;
             if (!_canRender) return;
-                // 1) Заголовок на всю ширину
-                var headerPanel = new Panel($"[bold]Панель управления ботом[/] [green1]@{TGBotClient.BotName}[/]")
+            // 1) Заголовок на всю ширину
+            var headerPanel = new Panel($"[bold]Панель управления ботом[/] [green1]@{TGBotClient.BotName}[/]")
+            .Border(BoxBorder.Rounded)
+            .BorderColor(Color.LightSkyBlue1)
+            .Expand();
+            if (Storage.SystemSettings.DebugMode)
+            {
+                headerPanel = new Panel($"[bold]Панель управления ботом[/] [green1]@{TGBotClient.BotName}[/]          [underline](DEBUG MODE)[/]")
                 .Border(BoxBorder.Rounded)
                 .BorderColor(Color.LightSkyBlue1)
                 .Expand();
+            }
 
             // 2) Левая колонка: меню действий
 
@@ -333,8 +340,8 @@ namespace UITGBot.Core
                         $"  [silver]Файл ответов (положительные):[/] [grey]{Storage.SystemSettings.SuccessReplyPath}[/]{Environment.NewLine}" +
                         $"  [silver]Файл ответов (отрицательные):[/] [grey]{Storage.SystemSettings.ErrorReplyPath}[/]{Environment.NewLine}" +
                         $"  [silver]Логи хранятся в:[/] [grey]{Storage.SystemSettings.LogDirectory}[/]{Environment.NewLine}" +
-                        $"  [silver]История чатов:[/] {(Storage.SystemSettings.StoreChatActivity ? 
-                            $"[lightskyblue1]{Storage.SystemSettings.ChatActivityStoragePath}[/]" 
+                        $"  [silver]История чатов:[/] {(Storage.SystemSettings.StoreChatActivity ?
+                            $"[lightskyblue1]{Storage.SystemSettings.ChatActivityStoragePath}[/]"
                             : "[purple_1]отключено[/]")}{Environment.NewLine}";
             // правая колонка → две строки: по одной диаграмме
             layout["right"].SplitRows(

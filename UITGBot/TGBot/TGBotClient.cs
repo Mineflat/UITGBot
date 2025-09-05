@@ -139,7 +139,7 @@ namespace UITGBot.TGBot
                 UILogger.AddLog($"{proccessResult.ErrorMessage}", "ERROR");
                 if (!string.IsNullOrEmpty(proccessResult.ReplyMessage))
                 {
-                    UILogger.AddLog($" ~> {proccessResult.ReplyMessage}", "EXECUTION RESULT");
+                    UILogger.AddLog($" ~>\n{proccessResult.ReplyMessage}", "EXECUTION RESULT");
                     await BotCommand.SendMessage($"{proccessResult.ReplyMessage}", false, client, update, token, true);
                 }
                 return;

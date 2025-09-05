@@ -85,7 +85,7 @@ namespace UITGBot.Core
         /// <summary>
         /// Включает или отключает Debug-мод
         /// </summary>
-        public bool DebugMode { get; internal set; } = false;
+        public bool DebugMode { get; set; } = false;
 
         /// <summary>
         /// Позволяет записывать историю чатов в файл

@@ -29,40 +29,46 @@ namespace UITGBot.Logging
                 case "INFORMATION":
                     logString = logString.Replace($"{severity}", $"[yellow][[{severity}]][[{DateTime.Now.ToString("dd.MM.yyyy hh:mm:ss")}]]:[/]");
                     Storage.Logger?.Logger.Information(message);
+                    Storage.LogBuffer.Add(logString); 
                     break;
                 case "WARNING":
                     logString = logString.Replace($"{severity}", $"[darkorange][[{severity}]][[{DateTime.Now.ToString("dd.MM.yyyy hh:mm:ss")}]]:[/]");
                     Storage.Logger?.Logger.Warning(message);
+                    Storage.LogBuffer.Add(logString); 
                     break;
                 case "ERROR":
                     logString = logString.Replace($"{severity}", $"[red1][[{severity}]][[{DateTime.Now.ToString("dd.MM.yyyy hh:mm:ss")}]]:[/]");
                     Storage.Logger?.Logger.Error(message);
+                    Storage.LogBuffer.Add(logString); 
                     break;
                 case "FATAL":
                     logString = logString.Replace($"{severity}", $"[darkred][[{severity}]][[{DateTime.Now.ToString("dd.MM.yyyy hh:mm:ss")}]]:[/]");
                     Storage.Logger?.Logger.Fatal(message);
                     Program.OnPanic($"Критическая ошибка: {message}");
+                    Storage.LogBuffer.Add(logString); 
                     break;
                 case "MESSAGE":
                 case "VERBOSE":
                     logString = logString.Replace($"{severity}", $"[skyblue3][[{severity}]][[{DateTime.Now.ToString("dd.MM.yyyy hh:mm:ss")}]]:[/]");
                     Storage.Logger?.Logger.Information($"[{severity}]: {message}");
                     Storage.Logger?.Logger.Verbose(message);
+                    Storage.LogBuffer.Add(logString);
                     break;
                 case "EXECUTION RESULT":
                     logString = logString.Replace($"{severity}", $"[green1][[{severity}]][[{DateTime.Now.ToString("dd.MM.yyyy hh:mm:ss")}]]:[/]");
                     Storage.Logger?.Logger.Information(message);
+                    Storage.LogBuffer.Add(logString); 
                     break;
                 default:
                     if (Storage.SystemSettings.DebugMode)
                     {
                         logString = logString.Replace($"{severity}", $"[grey37][[{severity}]][[{DateTime.Now.ToString("dd.MM.yyyy hh:mm:ss")}]]:[/]");
                         Storage.Logger?.Logger.Debug(message);
+                        Storage.LogBuffer.Add(logString);
                     }
-                    break;
+                    return;
             }
-            Storage.LogBuffer.Add(logString);
-            if(_WriteLogsToConsole) Console.WriteLine(logString);
+            if (_WriteLogsToConsole) Console.WriteLine(logString);
             if (Storage.SetupOK) Core.UIRenderer.UpdateMainMenu();
             if (Storage.LogBuffer.Count > 250) Storage.LogBuffer = Storage.LogBuffer.TakeLast(250).ToList<string>();
         }
