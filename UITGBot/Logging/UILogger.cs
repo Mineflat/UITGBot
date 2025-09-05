@@ -68,7 +68,7 @@ namespace UITGBot.Logging
                     }
                     return;
             }
-            if (_WriteLogsToConsole) Console.WriteLine(logString);
+            //if (_WriteLogsToConsole) Console.WriteLine(logString);
             if (Storage.SetupOK) Core.UIRenderer.UpdateMainMenu();
             if (Storage.LogBuffer.Count > 250) Storage.LogBuffer = Storage.LogBuffer.TakeLast(250).ToList<string>();
         }
