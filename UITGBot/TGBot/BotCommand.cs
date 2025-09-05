@@ -112,22 +112,7 @@ namespace UITGBot.TGBot
         /// <summary>
         /// Список текстовых ответов на разных языках
         /// </summary>
-        public List<(string codeRegEXP, string message)> LanguageCodeReplyes { get; set; } = new List<(string codeRegEXP, string message)>
-        {
-            // ru-RU
-            new ()
-            {
-                codeRegEXP = "*ru*",
-                message = "ru-RU"
-            },
-            // en-US
-            new ()
-            {
-                codeRegEXP = "*en*",
-                message = "en-US"
-            },
-        };
-
+        public List<LanguageReplyItem> LanguageCodeReplyes { get; set; } = new List<LanguageReplyItem>();
         /// <summary>
         /// Проверяет команду перед ее добавлением в список доступных действий 
         /// </summary>
@@ -150,6 +135,23 @@ namespace UITGBot.TGBot
             {
                 if (!VerifyLanguageCodeList(this.LanguageCodeReplyes)) errorMessage += "В массиве LanguageCodeList есть неуникальные значения кода региона и/или ответного сообщения" + Environment.NewLine;
             }
+            // Дополнительно: создаем список LanguageCodeReplyes, если его нет
+            if (LanguageCodeReplyes == null || LanguageCodeReplyes.Count == 0)
+            {
+                LanguageCodeReplyes = new()
+                {
+                    new LanguageReplyItem()
+                    {
+                        LanguageCode = "*ru*",
+                        Message = ""
+                    },
+                    new LanguageReplyItem()
+                    {
+                        LanguageCode = "*en*",
+                        Message = ""
+                    }
+                };
+            }
             // Верификация 
             if (string.IsNullOrEmpty(errorMessage)) return true;// && Enabled;
             UILogger.AddLog($"Команда {(string.IsNullOrEmpty(Name) ? "(пустое имя команды)" : $"{Name}")} не прошла первичную верицикацию: {errorMessage}", "WARNING");
@@ -161,13 +163,13 @@ namespace UITGBot.TGBot
         /// </summary>
         /// <param name="LanguageCodeList"></param>
         /// <returns>Указывает, прошел ли указанный кортеж проверку на наличие дубликатов</returns>
-        private static bool VerifyLanguageCodeList(List<(string code, string message)> LanguageCodeList)
+        private static bool VerifyLanguageCodeList(List<LanguageReplyItem> LanguageCodeList)
         {
             if (LanguageCodeList.Count == 0) return false;
             // Проверка, что все коды - уникальны
             bool allUnique =
-                LanguageCodeList.Select(x => x.code).Distinct(StringComparer.Ordinal).Count() == LanguageCodeList.Count
-             && LanguageCodeList.Select(x => x.message).Distinct(StringComparer.Ordinal).Count() == LanguageCodeList.Count;
+                LanguageCodeList.Select(x => x.LanguageCode).Distinct(StringComparer.Ordinal).Count() == LanguageCodeList.Count
+             && LanguageCodeList.Select(x => x.Message).Distinct(StringComparer.Ordinal).Count() == LanguageCodeList.Count;
             return allUnique;
         }
         /// <summary>
@@ -193,12 +195,16 @@ namespace UITGBot.TGBot
                 string languageCode = update.Message?.From?.LanguageCode ?? DefaultLanguagecodeRegEXP ?? "*ru*";
                 // Определяем сообщение, которое будет отправлено
                 string? selectedMessage = string.Empty;
-                Regex r = new Regex(languageCode);
-                foreach (var message in LanguageCodeReplyes)
+                foreach (var lr in LanguageCodeReplyes)
                 {
-                    MatchCollection matches = r.Matches(message.codeRegEXP);
-                    if (matches.Count > 0) selectedMessage = message.message;
+                    var pattern = "^" + Regex.Escape(lr.LanguageCode).Replace(@"\*", ".*") + "$";
+                    if (Regex.IsMatch(languageCode ?? string.Empty, pattern, RegexOptions.IgnoreCase))
+                    {
+                        selectedMessage = lr.Message;
+                        break; // нашли — выходим
+                    }
                 }
+
                 // Отправляем сообщение в чат (пытаемся)
                 if (!string.IsNullOrEmpty(selectedMessage))
                 {

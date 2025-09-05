@@ -63,9 +63,9 @@ namespace UITGBot.TGBot.CommandTypes
             }
             else
             {
-                UILogger.AddLog("Список файлов еще пуст.", "WARNING");
+                UILogger.AddLog("Список файлов для команды еще пуст. Мне нечего отправить", "DEBUG");
             }
-            UILogger.AddLog("Таймер для мониторинга файлов запущен");
+            UILogger.AddLog("Таймер для мониторинга файлов запущен", "DEBUG");
         }
 
 

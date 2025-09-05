@@ -83,10 +83,10 @@ namespace UITGBot.Core.UI
                         new TextPrompt<bool>($"Сохранить изменения в файл {Storage.SystemSettings.ActionsPath}?")
                             .AddChoice(true)
                             .AddChoice(false)
-                            .DefaultValue(false)
+                            .DefaultValue(true)
                             .WithConverter(choice => choice ? "y" : "n"));
                         if (!saveConfirmation) break;
-                        UILogger.AddLog($"Администратор хочет изменить список действий");
+                        UILogger.AddLog($"Администратор хочет изменить список действий", "DEBUG");
                         try
                         {
                             string newActionList = JsonConvert.SerializeObject(Storage.BotCommands);
