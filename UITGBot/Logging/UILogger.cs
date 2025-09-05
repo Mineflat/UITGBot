@@ -10,10 +10,13 @@ namespace UITGBot.Logging
 {
     internal static class UILogger
     {
-        public static void InitUILogger()
+        private static bool _WriteLogsToConsole = false;
+        public static void InitUILogger(bool writeConsole = false)
         {
-            Storage.Logger = new LogProvider(false);
-            Storage.Logger.Logger.Information("Система логирования перешла в тихий режим (только файл и память)");
+            _WriteLogsToConsole = writeConsole;
+            Storage.Logger = new LogProvider(writeConsole);
+            if (writeConsole) AddLog("Система логирования не меняла режим изменения логов. Сообщения дублируются в консоль", "DEBUG");
+            else AddLog("Система логирования перешла в тихий режим (только файл и память)", "DEBUG");
         }
         public static void AddLog(string message, string severity = "INFORMATION")
         {
@@ -43,6 +46,7 @@ namespace UITGBot.Logging
                 case "MESSAGE":
                 case "VERBOSE":
                     logString = logString.Replace($"{severity}", $"[skyblue3][[{severity}]][[{DateTime.Now.ToString("dd.MM.yyyy hh:mm:ss")}]]:[/]");
+                    Storage.Logger?.Logger.Information($"[{severity}]: {message}");
                     Storage.Logger?.Logger.Verbose(message);
                     break;
                 default:
@@ -52,6 +56,7 @@ namespace UITGBot.Logging
                     break;
             }
             Storage.LogBuffer.Add(logString);
+            if(_WriteLogsToConsole) Console.WriteLine(logString);
             if (Storage.SetupOK) Core.UIRenderer.UpdateMainMenu();
             if (Storage.LogBuffer.Count > 250) Storage.LogBuffer = Storage.LogBuffer.TakeLast(250).ToList<string>();
         }

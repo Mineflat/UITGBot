@@ -12,6 +12,7 @@ using Telegram.Bot.Types;
 using UITGBot.Core;
 using Telegram.Bots.Types;
 using UITGBot.Logging;
+using System.Text.RegularExpressions;
 
 namespace UITGBot.TGBot
 {
@@ -94,6 +95,38 @@ namespace UITGBot.TGBot
         /// или отправится в чат напрямую (без привязки к сообщению пользователя)
         /// </summary>
         public bool SendMessageAsReply { get; set; } = false;
+        /// <summary>
+        /// Если true, то вместо отправки сообщения в чат, 
+        /// будет использоваться массив ответов на основе кода региона 
+        /// (LanguageCodeReplyes и DefaultLanguageCodeRegexp)
+        /// </summary>
+        public bool AllowLanguageCode { get; set; } = false;
+        /// <summary>
+        /// Код языка команды по-умолчанию: на каком языке ответит бот, 
+        /// если не сможет определить, из какой страны отправитель?
+        /// Примечание:
+        /// Это - регулярное выражение, т.к. Telegram отправляет IETF BCP-47 тег языка
+        /// Там может быть только язык (ru), язык+регион (pt-BR, en-GB), язык+скрипт (zh-Hant) и их комбинации
+        /// </summary>
+        public string DefaultLanguagecodeRegEXP = "*ru*";
+        /// <summary>
+        /// Список текстовых ответов на разных языках
+        /// </summary>
+        public List<(string codeRegEXP, string message)> LanguageCodeReplyes { get; set; } = new List<(string codeRegEXP, string message)>
+        {
+            // ru-RU
+            new ()
+            {
+                codeRegEXP = "*ru*",
+                message = "ru-RU"
+            },
+            // en-US
+            new ()
+            {
+                codeRegEXP = "*en*",
+                message = "en-US"
+            },
+        };
 
         /// <summary>
         /// Проверяет команду перед ее добавлением в список доступных действий 
@@ -112,21 +145,79 @@ namespace UITGBot.TGBot
                 }
             }
             if (string.IsNullOrEmpty(CommandType)) errorMessage += "CommandType: Неверный тип команды" + Environment.NewLine;
+            // Проверка, что все коды - уникальны
+            if (this.AllowLanguageCode)
+            {
+                if (!VerifyLanguageCodeList(this.LanguageCodeReplyes)) errorMessage += "В массиве LanguageCodeList есть неуникальные значения кода региона и/или ответного сообщения" + Environment.NewLine;
+            }
+            // Верификация 
             if (string.IsNullOrEmpty(errorMessage)) return true;// && Enabled;
             UILogger.AddLog($"Команда {(string.IsNullOrEmpty(Name) ? "(пустое имя команды)" : $"{Name}")} не прошла первичную верицикацию: {errorMessage}", "WARNING");
             Enabled = false;
             return Enabled;
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="LanguageCodeList"></param>
+        /// <returns>Указывает, прошел ли указанный кортеж проверку на наличие дубликатов</returns>
+        private static bool VerifyLanguageCodeList(List<(string code, string message)> LanguageCodeList)
+        {
+            if (LanguageCodeList.Count == 0) return false;
+            // Проверка, что все коды - уникальны
+            bool allUnique =
+                LanguageCodeList.Select(x => x.code).Distinct(StringComparer.Ordinal).Count() == LanguageCodeList.Count
+             && LanguageCodeList.Select(x => x.message).Distinct(StringComparer.Ordinal).Count() == LanguageCodeList.Count;
+            return allUnique;
+        }
         /// <summary>
         /// Функция для вызова выбранной команды
         /// </summary>
-        /// <returns>Кортеж: true - если инициализация прошла успешно, *string - сообщение об ошибке</returns>
         public async virtual Task ExecuteCommand(ITelegramBotClient client, Telegram.Bot.Types.Update update, CancellationToken token)
         {
             await Task.Delay(0);
             throw new Exception($"Ты ебанат вызывать функцию в классе-родителе? ({Name})");
         }
+        /// <summary>
+        /// Отправляет сообщение на основе коде языка пользователя, который инициировал команду. 
+        /// Если такой возможности нет, выполняет команду
+        /// </summary>
+        /// <param name="client"></param>
+        /// <param name="update"></param>
+        /// <param name="token"></param>
+        public async Task ExecuteCommand_LanguageCodeSpecific(ITelegramBotClient client, Telegram.Bot.Types.Update update, CancellationToken token)
+        {
+            if (AllowLanguageCode)
+            {
+                // Определяем код 
+                string languageCode = update.Message?.From?.LanguageCode ?? DefaultLanguagecodeRegEXP ?? "*ru*";
+                // Определяем сообщение, которое будет отправлено
+                string? selectedMessage = string.Empty;
+                Regex r = new Regex(languageCode);
+                foreach (var message in LanguageCodeReplyes)
+                {
+                    MatchCollection matches = r.Matches(message.codeRegEXP);
+                    if (matches.Count > 0) selectedMessage = message.message;
+                }
+                // Отправляем сообщение в чат (пытаемся)
+                if (!string.IsNullOrEmpty(selectedMessage))
+                {
+                    await SendMessage(selectedMessage, ReplyPrivateMessages, client, update, token, SendMessageAsReply);
+                    return;
+                }
+                UILogger.AddLog($"Произошла ошибка при отправке ответа с сообношением кода региона:\n\t" +
+                    $"Сообщение: ({(string.IsNullOrEmpty(selectedMessage) ? "(ПУСТОТА)" : selectedMessage)}\n\t" +
+                    $"Код региона: ({(string.IsNullOrEmpty(languageCode) ? "(ПУСТОТА)" : languageCode)}\n\t" +
+                    $"Проверь список ExecuteCommand - вероятно, там нет запрашиваемого: " +
+                    $"{(string.IsNullOrEmpty(update.Message?.From?.LanguageCode) ? "(РЕГИОН ОТПРАВИТЕЛЯ НЕ ОПРЕДЕЛЕН)" : update.Message?.From?.LanguageCode)}", "DEBUG");
+                UILogger.AddLog($"Произошла ошибка при форматировании ответа в зависимости от кода региона. " +
+                    $"Пробую выполнить команду так, как она должна выполняться в обычном режиме\n\n\t" +
+                    $"Совет: возможно, стоит отключить этот функционал для команды \"{this.Name}\":\n\t" +
+                    $"AllowLanguageCode => false", "DEBUG");
+            }
+            await this.ExecuteCommand(client, update, token);
+        }
+
         public static async Task<bool> SendMessage(string message, bool replyPrivateMessages, ITelegramBotClient client, Telegram.Bot.Types.Update update, CancellationToken token, bool replyMessage = false)
         {
             UILogger.AddLog($"Результат выполнения команды {(string.IsNullOrEmpty(update.Message?.Text) ? "(пустое сообщение)" : update.Message.Text)}");

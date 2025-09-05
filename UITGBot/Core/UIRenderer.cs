@@ -214,9 +214,10 @@ namespace UITGBot.Core
 
         public static void UpdateMainMenu()
         {
+            if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("NOGUI"))) return;
             if (!_canRender) return;
-            // 1) Заголовок на всю ширину
-            var headerPanel = new Panel($"[bold]Панель управления ботом[/] [green1]@{TGBotClient.BotName}[/]")
+                // 1) Заголовок на всю ширину
+                var headerPanel = new Panel($"[bold]Панель управления ботом[/] [green1]@{TGBotClient.BotName}[/]")
                 .Border(BoxBorder.Rounded)
                 .BorderColor(Color.LightSkyBlue1)
                 .Expand();

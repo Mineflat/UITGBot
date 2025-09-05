@@ -74,10 +74,13 @@ namespace UITGBot.TGBot
             );
             BotName = botClient.GetMe(cancellationToken.Token).Result.Username ?? "[не определено]";
             UILogger.AddLog($"Started bot @{BotName}");
-            Logging.UILogger.InitUILogger();
             Storage.SetupOK = true;
-
-            Core.UIRenderer.RestartUI();
+            if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("NOGUI")))
+            {
+                Logging.UILogger.InitUILogger();
+                Core.UIRenderer.RestartUI();
+            }
+            else Logging.UILogger.InitUILogger(true);
         }
         /// <summary>
         /// Функция обработки сообщений Телеграмм-ботом
@@ -105,7 +108,8 @@ namespace UITGBot.TGBot
             if (currentChat == null)
             {
                 Storage.CurrenetChats.Add(new Core.Messaging.ChatActivity(update.Message.Chat));
-                currentChat = Storage.CurrenetChats.FirstOrDefault(x => x.CurrentChat.Id == update.Message.Chat.Id); // Вопрос: а зачем? А затем, что его до этого момента не было там
+                currentChat = Storage.CurrenetChats.FirstOrDefault(x => x.CurrentChat.Id == update.Message.Chat.Id); // Вопрос: а зачем?
+                                                                                                                     // А затем, что его до этого момента не было там
                 Storage.Statisticks.botChatsKnown++;
             }
             currentChat?.UpdateChatStory(update.Message); // Добавляем сообщение в пул чатов
@@ -144,7 +148,19 @@ namespace UITGBot.TGBot
                 {
                     UILogger.AddLog($"Выполнение команды \"{proccessResult.SelectedCommand.Name}\" пользователем {userName} ...");
                     Storage.Statisticks.botMessagesProccessed++;
-                    await proccessResult.SelectedCommand.ExecuteCommand(client, update, token);
+                    await proccessResult.SelectedCommand.ExecuteCommand_LanguageCodeSpecific(client, update, token);
+                    #region Старая версия реализации
+                    //// Если команда зависит от языка
+                    //if (proccessResult.SelectedCommand.AllowLanguageCode)
+                    //{
+                    //    await proccessResult.SelectedCommand.ExecuteCommand_LanguageCodeSpecific(client, update, token);
+                    //}
+                    //// Если команда НЕ зависит от языка
+                    //else
+                    //{
+                    //    await proccessResult.SelectedCommand.ExecuteCommand(client, update, token);
+                    //}
+                    #endregion
                     // Выполнение каскадной команды (независимо от результата выполнения предыдущей команды)
                     //if (proccessResult.SelectedCommand.RunAfter != null)
                     //{
@@ -173,19 +189,28 @@ namespace UITGBot.TGBot
             UILogger.AddLog(exception.Message, "ERROR");
             if (string.Equals(exception.Message, "Request timed out", StringComparison.OrdinalIgnoreCase))
             {
-                Console.Clear();
-                var table = new Table().Centered();
-                AnsiConsole.Progress()
-                    .Start(ctx =>
-                    {
-                        // Define tasks
-                        var task1 = ctx.AddTask("[green]Похоже, что сервера телеграм стали недоступны на некоторое время... Ждем 30 секунд и повторяем[/]");
-                        while (!ctx.IsFinished)
+                if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("NOGUI")))
+                {
+                    Console.Clear();
+                    var table = new Table().Centered();
+                    AnsiConsole.Progress()
+                        .Start(ctx =>
                         {
-                            Thread.Sleep(1000);
-                            task1.Increment(3);
-                        }
-                    }); // 30 секунд таймаута перед тем как отправлять следующее сообщение 
+                            // Define tasks
+                            var task1 = ctx.AddTask("[green]Похоже, что сервера телеграм стали недоступны на некоторое время... Ждем 30 секунд и повторяем[/]");
+                            while (!ctx.IsFinished)
+                            {
+                                Thread.Sleep(1000);
+                                task1.Increment(3);
+                            }
+                        }); // 30 секунд таймаута перед тем как отправлять следующее сообщение 
+
+                }
+                else
+                {
+                    UILogger.AddLog("Похоже, что сервера телеграм стали недоступны на некоторое время... Ждем 30 секунд и повторяем", "WARNING");
+                    Task.Delay(30000);
+                }
                 botErrorsLeft = 5;
                 return Task.CompletedTask;
             }
