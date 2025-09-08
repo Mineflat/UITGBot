@@ -204,7 +204,6 @@ namespace UITGBot.TGBot
                         break; // нашли — выходим
                     }
                 }
-
                 // Отправляем сообщение в чат (пытаемся)
                 if (!string.IsNullOrEmpty(selectedMessage))
                 {

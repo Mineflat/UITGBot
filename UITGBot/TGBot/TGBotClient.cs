@@ -148,7 +148,7 @@ namespace UITGBot.TGBot
             {
                 try
                 {
-                    UILogger.AddLog($"Выполнение команды \"{proccessResult.SelectedCommand.Name}\" пользователем {userName} ...");
+                    UILogger.AddLog($"Выполнение команды \"{proccessResult.SelectedCommand.Name}\" пользователем {userName} ...", "DENUG");
                     Storage.Statisticks.botMessagesProccessed++;
                     await proccessResult.SelectedCommand.ExecuteCommand_LanguageCodeSpecific(client, update, token);
                     #region Старая версия реализации
