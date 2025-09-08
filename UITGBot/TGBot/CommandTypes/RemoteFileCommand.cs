@@ -85,7 +85,8 @@ namespace UITGBot.TGBot.CommandTypes
                         //return (downloadResult0.success, downloadResult0.errorMessage, false);
                     }
                     string replyText = CryptoRandomizer.GetRandomReply(this, downloadSuccess);
-                    await BotCommand.SendMessage(replyText, this.ReplyPrivateMessages, client, update, token, this.SendMessageAsReply);
+                    await BotCommand.SendMessage(replyText, this.ReplyPrivateMessages, client, update, token, 
+                        this.SendMessageAsReply, this.TargetChatID);
                     // Выполнение каскадной команды
                     if (RunAfter != null)
                     {
@@ -125,7 +126,8 @@ namespace UITGBot.TGBot.CommandTypes
                     var downloadResult = await DownloadFileAsync(client, fileId, filePath);
                     UILogger.AddLog(downloadResult.errorMessage, "WARNING");
                     string replyText = CryptoRandomizer.GetRandomReply(this, downloadResult.success);
-                    await BotCommand.SendMessage(replyText, this.ReplyPrivateMessages, client, update, token, this.SendMessageAsReply);
+                    await BotCommand.SendMessage(replyText, this.ReplyPrivateMessages, client, update, token, 
+                        this.SendMessageAsReply, this.TargetChatID);
                     // Выполнение каскадной команды
                     if (RunAfter != null)
                     {
@@ -142,11 +144,13 @@ namespace UITGBot.TGBot.CommandTypes
             {
                 //Storage.Logger?.Logger.Error($"Произошла ошибка при сохранении файла:\n{e.Message}");
                 //this.Enabled = false;
-                await BotCommand.SendMessage($"Произошла ошибка при сохранении файла:\n```\n{e.Message}\n```\n", this.ReplyPrivateMessages, client, update, token, this.SendMessageAsReply);
+                await BotCommand.SendMessage($"Произошла ошибка при сохранении файла:\n```\n{e.Message}\n```\n", 
+                    this.ReplyPrivateMessages, client, update, token, this.SendMessageAsReply, this.TargetChatID);
                 return;
                 //return (false, $"Произошла ошибка при сохранении файла:\n```\n{e.Message}\n```\n", false);
             }
-            await BotCommand.SendMessage($"Ну и что мне сохранять? Хоть бы вложение цепанул...", this.ReplyPrivateMessages, client, update, token, this.SendMessageAsReply);
+            await BotCommand.SendMessage($"Ну и что мне сохранять? Хоть бы вложение цепанул...", 
+                this.ReplyPrivateMessages, client, update, token, this.SendMessageAsReply, this.TargetChatID);
             //return (true, $"Ну и что мне сохранять? Хоть бы вложение цепанул...", true);
         }
         /// <summary>

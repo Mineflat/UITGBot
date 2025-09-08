@@ -114,6 +114,12 @@ namespace UITGBot.TGBot
         /// </summary>
         public List<LanguageReplyItem> LanguageCodeReplyes { get; set; } = new List<LanguageReplyItem>();
         /// <summary>
+        /// ID чата, если необходимо отправить сообщение в другое место, 
+        /// которое не совпадает с тем, в котором была инициирована команда
+        /// </summary>
+        public long TargetChatID { get; set; } = 0;
+
+        /// <summary>
         /// Проверяет команду перед ее добавлением в список доступных действий 
         /// </summary>
         /// <returns>Успешность проверки команды</returns>
@@ -208,7 +214,8 @@ namespace UITGBot.TGBot
                 // Отправляем сообщение в чат (пытаемся)
                 if (!string.IsNullOrEmpty(selectedMessage))
                 {
-                    await SendMessage(selectedMessage, ReplyPrivateMessages, client, update, token, SendMessageAsReply);
+                    await SendMessage(selectedMessage, ReplyPrivateMessages, client, update, token, 
+                        this.SendMessageAsReply, this.TargetChatID);
                     return;
                 }
                 UILogger.AddLog($"Произошла ошибка при отправке ответа с сообношением кода региона:\n\t" +
@@ -224,7 +231,7 @@ namespace UITGBot.TGBot
             await this.ExecuteCommand(client, update, token);
         }
 
-        public static async Task<bool> SendMessage(string message, bool replyPrivateMessages, ITelegramBotClient client, Telegram.Bot.Types.Update update, CancellationToken token, bool replyMessage = false)
+        public static async Task<bool> SendMessage(string message, bool replyPrivateMessages, ITelegramBotClient client, Telegram.Bot.Types.Update update, CancellationToken token, bool replyMessage = false, long replyChatID = 0)
         {
             UILogger.AddLog($"Результат выполнения команды {(string.IsNullOrEmpty(update.Message?.Text) ? "(пустое сообщение)" : update.Message.Text)}        ~>", "EXECUTION RESULT");
             if (message.Length > 4096)
@@ -235,6 +242,8 @@ namespace UITGBot.TGBot
             try
             {
                 if (update.Message == null || update.Message.From == null) { UILogger.AddLog($"Сообщение не может быть отправлено, т.к. параметр update.Message.From пуст", "ERROR"); return false; }
+                // Логика на случай, если нам таки передали кастомный ChatID (не равный 0)
+                if (replyChatID != 0) { update.Message.From.Id = replyChatID; update.Message.Chat.Id = replyChatID; } 
                 if (replyPrivateMessages)
                 {
 
