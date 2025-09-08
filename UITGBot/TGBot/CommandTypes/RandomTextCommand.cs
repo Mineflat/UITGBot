@@ -39,7 +39,7 @@ namespace UITGBot.TGBot.CommandTypes
                 string reply = lines[CryptoRandomizer.GetRandom(0, lines.Count - 1)];
                 if (string.IsNullOrEmpty(reply)) throw new Exception("В указанном файле отсутствует текст");
                 if (reply.Length > 4096) throw new Exception("Текст в указанном файле имеет длину более 4096 символов (ограничение Телеграмм)");
-                await BotCommand.SendMessage(reply, this.ReplyPrivateMessages, client, update, token, this.SendMessageAsReply);
+                await BotCommand.SendMessage(reply, this.ReplyPrivateMessages, client, update, token, this.SendMessageAsReply, this.TargetChatID);
                 // Выполнение каскадной команды
                 if (RunAfter != null)
                 {
@@ -53,7 +53,8 @@ namespace UITGBot.TGBot.CommandTypes
             catch (Exception e)
             {
                 //this.Enabled = false;
-                await BotCommand.SendMessage($"Команда {this.Name} не может быть выполнена:\n{e.Message}", this.ReplyPrivateMessages, client, update, token, this.SendMessageAsReply);
+                await BotCommand.SendMessage($"Команда {this.Name} не может быть выполнена:\n{e.Message}", 
+                    this.ReplyPrivateMessages, client, update, token, this.SendMessageAsReply, this.TargetChatID);
             }
         }
     }

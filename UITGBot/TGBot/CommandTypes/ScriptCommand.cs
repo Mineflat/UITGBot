@@ -74,7 +74,9 @@ namespace UITGBot.TGBot.CommandTypes
                 // Отписаться в чат, что задача успешно поставлена на выполнение
                 if (SendAlertToChatBeforeExecutingScript)
                 {
-                    await BotCommand.SendMessage($"Задача успешно поставлена на выполнение. Таймаут выполнения для этой задачи: {(Timeout <= 0 ? "не установлен" : Timeout)}", this.ReplyPrivateMessages, client, update, token, this.SendMessageAsReply);
+                    await BotCommand.SendMessage($"Задача успешно поставлена на выполнение. Таймаут выполнения для этой задачи: " +
+                        $"{(Timeout <= 0 ? "не установлен" : Timeout)}", this.ReplyPrivateMessages, client, update, token, 
+                        this.SendMessageAsReply, this.TargetChatID);
                 }
                 UILogger.AddLog($"Задача \"{this.Name}\" успешно поставлена на выполнение. Таймаут выполнения для этой задачи: {(Timeout <= 0 ? "не установлен" : Timeout)}", "DEBUG");
                 var outputBuilder = new StringBuilder();
@@ -128,11 +130,13 @@ namespace UITGBot.TGBot.CommandTypes
                 // Отправка результата в чат
                 if (SendTextOutputToChat)
                 {
-                    await BotCommand.SendMessage($"{result}", this.ReplyPrivateMessages, client, update, token, this.SendMessageAsReply);
+                    await BotCommand.SendMessage($"{result}", this.ReplyPrivateMessages, client, update, token, 
+                        this.SendMessageAsReply, this.TargetChatID);
                 }
                 else
                 {
-                    await BotCommand.SendMessage($"Выполнение команды завершено", this.ReplyPrivateMessages, client, update, token, this.SendMessageAsReply);
+                    await BotCommand.SendMessage($"Выполнение команды завершено", 
+                        this.ReplyPrivateMessages, client, update, token, this.SendMessageAsReply, this.TargetChatID);
                 }
 
                 // Выполнение каскадной команды
@@ -147,7 +151,8 @@ namespace UITGBot.TGBot.CommandTypes
             catch (Exception e)
             {
                 //this.Enabled = false;
-                await BotCommand.SendMessage($"Команда {this.Name} не может быть выполнена:\n{e.Message}", this.ReplyPrivateMessages, client, update, token, this.SendMessageAsReply);
+                await BotCommand.SendMessage($"Команда {this.Name} не может быть выполнена:\n{e.Message}", 
+                    this.ReplyPrivateMessages, client, update, token, this.SendMessageAsReply, this.TargetChatID);
             }
         }
 

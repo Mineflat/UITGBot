@@ -186,7 +186,8 @@ namespace UITGBot.TGBot.CommandTypes
             catch (Exception e)
             {
                 //this.Enabled = false;
-                await BotCommand.SendMessage($"Команда {this.Name} не может быть выполнена:\n{e.Message}", this.ReplyPrivateMessages, client, update, token, this.SendMessageAsReply);
+                await BotCommand.SendMessage($"Команда {this.Name} не может быть выполнена:\n{e.Message}", 
+                    this.ReplyPrivateMessages, client, update, token, this.SendMessageAsReply, this.TargetChatID);
             }
             // Выполнение каскадной команды
             if (RunAfter != null)
