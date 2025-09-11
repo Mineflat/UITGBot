@@ -19,9 +19,15 @@ namespace UITGBot.Core
         {
             new UIScreenItem()
             {
-                Title = "Управление списком действий",
+                Title = "Управление списком [bold]действий[/]",
                 ExecAfter = UIActionsRealization.SetupActions
             },
+            new UIScreenItem()
+            {
+                Title = "Управление списком [bold]групп[/]",
+                ExecAfter = UIActionsRealization.SetupGroups
+            },
+
             new UIScreenItem()
             {
                 Title = "Открыть чат от имени бота",
@@ -340,9 +346,10 @@ namespace UITGBot.Core
                         $"  [silver]Файл ответов (положительные):[/] [grey]{Storage.SystemSettings.SuccessReplyPath}[/]{Environment.NewLine}" +
                         $"  [silver]Файл ответов (отрицательные):[/] [grey]{Storage.SystemSettings.ErrorReplyPath}[/]{Environment.NewLine}" +
                         $"  [silver]Логи хранятся в:[/] [grey]{Storage.SystemSettings.LogDirectory}[/]{Environment.NewLine}" +
-                        $"  [silver]История чатов:[/] {(Storage.SystemSettings.StoreChatActivity ?
-                            $"[lightskyblue1]{Storage.SystemSettings.ChatActivityStoragePath}[/]"
-                            : "[purple_1]отключено[/]")}{Environment.NewLine}";
+                        $"  [silver]История чатов:[/] {(Storage.SystemSettings.StoreChatActivity ? 
+                            $"[grey]{Storage.SystemSettings.ChatActivityStoragePath}[/]" : "[purple_1]отключено[/]")}{Environment.NewLine}" +
+                        $"  [silver]Настройки групп:[/] {(string.IsNullOrEmpty(Storage.SystemSettings.GroupConfigurationFilePath) ?
+                            "[purple_1]отключено[/]" : $"[grey]{Storage.SystemSettings.GroupConfigurationFilePath}[/]")}{Environment.NewLine}";
             // правая колонка → две строки: по одной диаграмме
             layout["right"].SplitRows(
                 new Layout("statA") { Size = 12 },

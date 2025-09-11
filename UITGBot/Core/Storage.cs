@@ -45,6 +45,23 @@ namespace UITGBot.Core
         /// <summary>
         /// Список групп пользователей, которые создал администратор
         /// </summary>
-        public static List<BotGroup> InternalGroups { get; set; } = new List<BotGroup>();
+        public static List<BotGroup> InternalGroups { get; set; } = new List<BotGroup>()
+        {
+            new BotGroup()
+            {
+                GroupMembers = new List<GroupMember>()
+                {
+                    new GroupMember()
+                    {
+                        UserID = 602989734,
+                        Username = "ElijahKamsky"
+                    }
+                },
+                AllowedCommandNames = new List<string>()
+                {
+                    "start", "help", "echo"
+                }
+            }
+        };
     }
 }

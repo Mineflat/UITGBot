@@ -18,7 +18,8 @@ using Telegram.Bot.Types;
 using UITGBot.Core.Messaging;
 using System.Collections.Concurrent;
 using Spectre.Console.Rendering;
-using Color = Spectre.Console.Color;    // <-- для Text, TableColumn и т.п.
+using Color = Spectre.Console.Color;
+using UITGBot.Core.GroupMapping;    // <-- для Text, TableColumn и т.п.
 
 namespace UITGBot.Core.UI
 {
@@ -400,7 +401,201 @@ namespace UITGBot.Core.UI
             runner.Run();
         }
 
-        /// <summary>Вспомогательный класс для полноэкранного чата</summary>
+        /// <summary>
+        /// Логика управления группами пользователей в панели управления
+        /// </summary>
+        /// <exception cref="NotImplementedException"></exception>
+        internal static void SetupGroups()
+        {
+            if (!File.Exists(Storage.SystemSettings.GroupConfigurationFilePath)) InitializeNewGroupList();
+            // Проверка, что список групп не пуст
+            // Если список групп таки пуст, мы не будем выдумывать дополнительную логику.
+            // Логика тут в том, чтобы файл просто существовал, а что в нем - не ебет
+            EditGroupList();
+        }
+        /// <summary>
+        /// Создает файл со структурой групп
+        /// </summary>
+        private static void InitializeNewGroupList()
+        {
+        selectionStart:
+            Console.Clear();
+            string warningMessage = "Вы не указали путь к группам в конфигурационном файле " +
+                                    "(параметр [underline]GroupConfigurationFilePath[/]), " +
+                                    "поэтому я не могу дать вам его отредактировать сейчас.\n" +
+                                    "Однако, я могу создать его для вас. Что вы предпочтете?";
+            var fileCreationDesision = AnsiConsole.Prompt(
+                new SelectionPrompt<string>()
+                    .Title(warningMessage)
+                    .PageSize(5)
+                    .AddChoices(new[] {
+                        "Создать новый файл, я укажу путь к нему", "Спасибо, я еще подумаю"
+                    }));
+            bool canCreateFile = fileCreationDesision == "Создать новый файл, я укажу путь к нему" ? true : false;
+            if (canCreateFile)
+            {
+                // Обработка файла
+                string GroupConfigFileLocation = AnsiConsole.Prompt(
+                    new TextPrompt<string>("[green3_1]Укажите путь к файлу, где будут храниться настройки групп:[/]"));
+                Storage.SystemSettings.GroupConfigurationFilePath = GroupConfigFileLocation; // Этих изменений может не быть, поэтому сразу перезаписываем
+                // Если файл существует
+                if (File.Exists(GroupConfigFileLocation))
+                {
+                    // На случай, если пользователь уже заполнял этот конфигурационный файл
+                    var UseExistingFileDesision =
+                         AnsiConsole.Prompt(
+                             new SelectionPrompt<string>()
+                            .Title($"Файл [green3_1][bold]{GroupConfigFileLocation}[/][/] уже существует. Будем использовать его?")
+                            .PageSize(5)
+                            .AddChoices(new[] {
+                                "Да, я уже заполнил его необходимыми данными", "Нет, я укажу другой путь"
+                        }));
+                    bool canUseSelectedFile = UseExistingFileDesision == "Да, я уже заполнил его необходимыми данными" ? true : false;
+                    if (canUseSelectedFile)
+                    {
+                        // Парсим данные из файла canUseSelectedFile и обновляем их в список
+                        string? fileContent = string.Empty;
+                        try
+                        {
+                            fileContent = File.ReadAllText(Storage.SystemSettings.GroupConfigurationFilePath);
+                        }
+                        catch (Exception fileReadException)
+                        {
+                            // Логируем ошибку, если у нас не получатся получить доступ к файлу (маловероятно, но может быть)
+                            UILogger.AddLog($"Произошла ошибка при чтении файла {Storage.SystemSettings.GroupConfigurationFilePath}:" +
+                                $"\n{fileReadException.Message}", "ERROR");
+                            Console.WriteLine($"Произошла ошибка при чтении файла {Storage.SystemSettings.GroupConfigurationFilePath}:" +
+                                $"\n{fileReadException.Message}" +
+                                $"\nНажмите любую кнопку для продолжения");
+                            Console.ReadKey(true);
+                            return;
+                        }
+                        // На случай, если файл таки оказался пустым, мы ничего не обновляем
+                        if (string.IsNullOrEmpty(fileContent))
+                        {
+                            UILogger.AddLog($"Не удалось применить изменения для списка групп бота: указанный файл пуст " +
+                                            $"({Storage.SystemSettings.GroupConfigurationFilePath})", "ERROR");
+                            return;
+                        }
+                        try
+                        {
+                            var settings = new JsonSerializerSettings
+                            {
+                                Formatting = Formatting.Indented
+                            };
+                            List<BotGroup>? editedGroupList = JsonConvert.DeserializeObject<List<BotGroup>>(fileContent, settings);
+                            if (editedGroupList != null)
+                            {
+                                Storage.InternalGroups = editedGroupList;
+                                UILogger.AddLog($"Успешно изменен список групп бота. Теперь их количество - {Storage.InternalGroups.Count}", "WARNING");
+                            }
+                            else
+                            {
+                                UILogger.AddLog($"Не удалось изменить список групп бота: неверная JSON-структура (пустота)", "WARNING");
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            UILogger.AddLog($"Не удалось применить изменения для списка групп бота: {e.Message}", "ERROR");
+                        }
+                    }
+                    else
+                    {
+                        // Повторяем все с начала, т.к. у нас будет другой путь к файлу
+                        Console.Clear();
+                        goto selectionStart;
+                    }
+                }
+                // Если файл НЕ существует
+                else
+                {
+                    try
+                    {
+                        File.Create(GroupConfigFileLocation);
+                        Storage.SystemSettings.GroupConfigurationFilePath = GroupConfigFileLocation; // Этих изменений может не быть в файле
+                        var fileEditDesision = AnsiConsole.Prompt(
+                            new SelectionPrompt<string>()
+                                .Title($"Файл [yellow]{GroupConfigFileLocation}[/] успешно создан. Хотите его отредактировать?")
+                                .PageSize(5)
+                                .AddChoices(new[] {
+                                    "Да, я хочу заполнить его данными", "Нет, я сделаю это позже"
+                                }));
+                        bool canEditFile = fileEditDesision == "Да, я хочу заполнить его данными" ? true : false;
+                        if (canEditFile)
+                        {
+                            EditGroupList();
+                        }
+                        else
+                        {
+                            UILogger.AddLog("Создана конфигурация для групп бота, однако она не была заполнена в моменте. " +
+                                "Конфигурация временно заблокирована", "WARNING");
+                        }
+                        // По желанию, записываем изменения в файл
+                        var fileWriteDesision = AnsiConsole.Prompt(
+                        new SelectionPrompt<string>()
+                            .Title($"В основной конифигурации произошли изменения. [yellow]Сохранить изменения в конфигурационном файле на диске?[/]")
+                            .PageSize(5)
+                            .AddChoices(new[] {
+                                "Да, запиши изменения в основной конфигурационный файл", "Нет, я сделаю это сам"
+                            }));
+                        bool canUpdateConfigFile = fileWriteDesision == "Да, я хочу заполнить его данными" ? true : false;
+                        if (canUpdateConfigFile)
+                        {
+                            string currentConfiguration = JsonConvert.SerializeObject(Storage.SystemSettings, Formatting.Indented);
+                            File.WriteAllText(GroupConfigFileLocation, currentConfiguration);
+                            UILogger.AddLog($"Администратор записал изменения групп в файл \"{Storage.SystemSettings.GroupConfigurationFilePath}\"", "DEBUG");
+                        }
+                        UILogger.AddLog($"Администратор отказался записывать изменения групп в файл \"{Storage.SystemSettings.GroupConfigurationFilePath}\"", "DEBUG");
+                    }
+                    catch (Exception fileCreationExceprion)
+                    {
+                        Console.Clear();
+                        string errorMessage = $"Мне не удалось создать файл \"{GroupConfigFileLocation}\" для хранения информации о группах\n" +
+                            $"Вероятно, не хватает прав или путь указан не верно. Подробнее в ошибке:\n" +
+                            $"\t{fileCreationExceprion.Message}";
+                        UILogger.AddLog(errorMessage, "WARNING");
+                        errorMessage = errorMessage + Environment.NewLine + "[grey]Нажмите любую кнопку для продолжения ...[/]";
+                        AnsiConsole.Write(new Align(
+                            new Text(errorMessage),
+                            HorizontalAlignment.Center,
+                            VerticalAlignment.Top
+                        ));
+                        Console.ReadKey();
+                    }
+                }
+            }
+            else
+            {
+                UILogger.AddLog("Администратор отказался создавать новый файл для использования механизма групп", "DEBUG");
+            }
+        }
+        private static void EditGroupList()
+        {
+            string? editedText = TerminalEditor.Edit(JsonConvert.SerializeObject(
+                Storage.InternalGroups,
+                Formatting.Indented));
+            if (string.IsNullOrEmpty(editedText)) { return; }
+            try
+            {
+                var settings = new JsonSerializerSettings
+                {
+                    Formatting = Formatting.Indented
+                };
+                List<BotGroup>? editedGroup = JsonConvert.DeserializeObject<List<BotGroup>>(editedText, settings);
+                if (editedGroup != null)
+                {
+                    Storage.InternalGroups = editedGroup;
+                    UILogger.AddLog($"Успешно изменен список групп бота. Теперь их количество - {Storage.InternalGroups.Count}", "WARNING");
+                }
+            }
+            catch (Exception e)
+            {
+                UILogger.AddLog($"Не удалось применить изменения для списка групп бота: {e.Message}", "ERROR");
+            }
+        }
+        /// <summary>
+        /// Вспомогательный класс для полноэкранного чата
+        /// </summary>
         internal class ChatRunner
         {
             private readonly ChatActivity _chat;
@@ -419,7 +614,10 @@ namespace UITGBot.Core.UI
                 foreach (var m in _chat.ChatStory)
                     Enqueue(m);
             }
-
+            /// <summary>
+            /// (Телеграм) Метод для установки сообщения в очередь для отправки всем подписавшимся
+            /// </summary>
+            /// <param name="m"></param>
             private void Enqueue(Message m)
             {
                 string time = m.Date.ToLocalTime().ToString("dd.MM.yy HH:mm");
