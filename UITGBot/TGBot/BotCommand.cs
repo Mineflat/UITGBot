@@ -245,7 +245,6 @@ namespace UITGBot.TGBot
                 if (replyChatID != 0) { update.Message.From.Id = replyChatID; update.Message.Chat.Id = replyChatID; } 
                 if (replyPrivateMessages)
                 {
-
                     await client.SendMessage(update.Message.From.Id,
                         message,
                         cancellationToken: token,

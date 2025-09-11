@@ -45,6 +45,10 @@ namespace UITGBot.Core
         /// Полезно при разрывах соединения с серверами телеграмм
         /// </summary>
         public bool IgnoreErrors { get; set; } = false;
+        /// <summary>
+        /// Включает или отключает Debug-мод
+        /// </summary>
+        public bool DebugMode { get; set; } = false;
         #endregion
 
         #region Логирование
@@ -82,11 +86,8 @@ namespace UITGBot.Core
         /// </summary>
         [JsonRequired]
         public required string ErrorReplyPath { get; set; }
-        /// <summary>
-        /// Включает или отключает Debug-мод
-        /// </summary>
-        public bool DebugMode { get; set; } = false;
 
+        #region Настройки логирования чатов
         /// <summary>
         /// Позволяет записывать историю чатов в файл
         /// </summary>
@@ -95,9 +96,19 @@ namespace UITGBot.Core
         /// Указывает, в какой именно директории будут храниться файлы истории чатов
         /// </summary>
         public string ChatActivityStoragePath { get; set; } = @"current-chats";
-
         #endregion
-        #region
+
+        #region Настройки групп
+        /// <summary>
+        /// Конфигурационный файл, в котором содержится массив из групп
+        /// Если путь пустой или внутри лежит невалидный JSON, механизм групп не используется
+        /// </summary>
+        public string GroupConfigurationFilePath { get; set; } = string.Empty;
+        #endregion
+
+        #region ***
+        #endregion
+
         #endregion
     }
 }

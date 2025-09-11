@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types.Enums;
+using UITGBot.Core.GroupMapping;
 using UITGBot.Core.Messaging;
 using UITGBot.Logging;
 using UITGBot.TGBot;
@@ -41,5 +42,9 @@ namespace UITGBot.Core
         public static bool SetupOK { get; set; } = false;
         public static StatsObject Statisticks { get; set; } = new StatsObject();
         public static List<ChatActivity> CurrenetChats { get; set; } = new List<ChatActivity>();
+        /// <summary>
+        /// Список групп пользователей, которые создал администратор
+        /// </summary>
+        public static List<BotGroup> InternalGroups { get; set; } = new List<BotGroup>();
     }
 }
