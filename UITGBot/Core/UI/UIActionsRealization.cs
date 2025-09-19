@@ -411,7 +411,7 @@ namespace UITGBot.Core.UI
             // Проверка, что список групп не пуст
             // Если список групп таки пуст, мы не будем выдумывать дополнительную логику.
             // Логика тут в том, чтобы файл просто существовал, а что в нем - не ебет
-            EditGroupList();
+            else EditGroupList();
         }
         /// <summary>
         /// Создает файл со структурой групп
@@ -511,7 +511,7 @@ namespace UITGBot.Core.UI
                 {
                     try
                     {
-                        File.Create(GroupConfigFileLocation);
+                        File.WriteAllText(GroupConfigFileLocation, JsonConvert.SerializeObject(Storage.InternalGroups, Formatting.Indented));
                         Storage.SystemSettings.GroupConfigurationFilePath = GroupConfigFileLocation; // Этих изменений может не быть в файле
                         var fileEditDesision = AnsiConsole.Prompt(
                             new SelectionPrompt<string>()
@@ -531,6 +531,17 @@ namespace UITGBot.Core.UI
                                 "Конфигурация временно заблокирована", "WARNING");
                         }
                         // По желанию, записываем изменения в файл
+                        string currentConfiguration = JsonConvert.SerializeObject(Storage.SystemSettings, Formatting.Indented);
+                        // Проверяем, кон конфигурация не наебнется
+                        if(string.IsNullOrEmpty(currentConfiguration))
+                        {
+                            UILogger.AddLog($"Ошибка обновления основного файла конфигурации \"{Storage._configurationPath}\": " +
+                                $"не удалось сериализовать актуальную конфигурацию (пустая строка)", "ERROR");
+                            return;
+                        }
+                        var panel = new Panel(currentConfiguration);
+                        panel.Header = new PanelHeader("Новая конфигурация");
+                        AnsiConsole.Write(panel);
                         var fileWriteDesision = AnsiConsole.Prompt(
                         new SelectionPrompt<string>()
                             .Title($"В основной конифигурации произошли изменения. [yellow]Сохранить изменения в конфигурационном файле на диске?[/]")
@@ -538,14 +549,14 @@ namespace UITGBot.Core.UI
                             .AddChoices(new[] {
                                 "Да, запиши изменения в основной конфигурационный файл", "Нет, я сделаю это сам"
                             }));
-                        bool canUpdateConfigFile = fileWriteDesision == "Да, я хочу заполнить его данными" ? true : false;
+                        bool canUpdateConfigFile = fileWriteDesision == "Да, запиши изменения в основной конфигурационный файл" ? true : false;
                         if (canUpdateConfigFile)
                         {
-                            string currentConfiguration = JsonConvert.SerializeObject(Storage.SystemSettings, Formatting.Indented);
-                            File.WriteAllText(GroupConfigFileLocation, currentConfiguration);
-                            UILogger.AddLog($"Администратор записал изменения групп в файл \"{Storage.SystemSettings.GroupConfigurationFilePath}\"", "DEBUG");
+                            File.WriteAllText(Storage._configurationPath, currentConfiguration);
+                            UILogger.AddLog($"Администратор записал изменения групп в файл \"{Storage._configurationPath}\"", "WARNING");
                         }
-                        UILogger.AddLog($"Администратор отказался записывать изменения групп в файл \"{Storage.SystemSettings.GroupConfigurationFilePath}\"", "DEBUG");
+                        UILogger.AddLog($"Администратор отказался записывать изменения групп в файл \"{Storage._configurationPath}\"");
+                        return;
                     }
                     catch (Exception fileCreationExceprion)
                     {
@@ -585,6 +596,8 @@ namespace UITGBot.Core.UI
                 if (editedGroup != null)
                 {
                     Storage.InternalGroups = editedGroup;
+                    // Автоматическая запись изменений на диск
+                    File.WriteAllText(Storage.SystemSettings.GroupConfigurationFilePath, JsonConvert.SerializeObject(Storage.InternalGroups, Formatting.Indented));
                     UILogger.AddLog($"Успешно изменен список групп бота. Теперь их количество - {Storage.InternalGroups.Count}", "WARNING");
                 }
             }
